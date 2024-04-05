@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+
+
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+  <meta name="author" content="Xiur">
+
+
+  <meta name="subtitle" content="闲来记事">
+
+
+  <meta name="description" content="已巷的个人小站">
+
+
+
+<title>MIT6.5840 Lab1 实现 | Oncelane</title>
+
+
+
+<link rel="icon" href="/favicon.png">
+
+
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/nprogress/nprogress.css">
+
+
+
+<script src="/lib/jquery.min.js"></script>
+
+
+<script src="/lib/iconify-icon.min.js"></script>
+
+
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+  };
+</script>
+
+
+<script src="/lib/nprogress/nprogress.js"></script>
+
+<script>
+  $(document).ready(() => {
+    NProgress.configure({
+      showSpinner: false,
+    });
+    NProgress.start();
+    $("#nprogress .bar").css({
+      background: "#de7441",
+    });
+    $("#nprogress .peg").css({
+      "box-shadow": "0 0 2px #de7441, 0 0 4px #de7441",
+    });
+    $("#nprogress .spinner-icon").css({
+      "border-top-color": "#de7441",
+      "border-left-color": "#de7441",
+    });
+    setTimeout(function () {
+      NProgress.done();
+      $(".fade").removeClass("out");
+    }, 800);
+  });
+</script>
+
+<script>
+  (function () {
+    const prefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+    if (setting === "dark" || (prefersDark && setting !== "light"))
+      document.documentElement.classList.toggle("dark", true);
+    let isDark = document.documentElement.classList.contains("dark");
+  })();
+
+  $(document).ready(function () {
+    // init icon
+    const prefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = document.documentElement.classList.contains("dark");
+    $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
+
+    function toggleGiscusTheme() {
+      const isDark = document.documentElement.classList.contains("dark");
+      const giscusFrame = document.querySelector("iframe.giscus-frame");
+      if (giscusFrame) {
+        giscusFrame.contentWindow.postMessage(
+          {
+            giscus: {
+              setConfig: {
+                theme: isDark ? "dark" : "light",
+              },
+            },
+          },
+          "https://giscus.app"
+        );
+      }
+    }
+
+
+    // toggle dark mode
+    function toggleDark() {
+      let isDark = document.documentElement.classList.contains("dark");
+      const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+      isDark = !isDark;
+      document.documentElement.classList.toggle("dark", isDark);
+      $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
+      if (prefersDark === isDark) {
+        localStorage.setItem("hexo-color-scheme", "auto");
+      } else {
+        localStorage.setItem("hexo-color-scheme", isDark ? "dark" : "light");
+      }
+      toggleGiscusTheme();
+    }
+    $("#toggle-dark").click(toggleDark);
+
+    // listen dark mode change
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", (e) => {
+        const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+        if (setting === "auto") {
+          document.documentElement.classList.toggle("dark", e.matches);
+          $("#theme-icon").attr(
+            "icon",
+            e.matches ? "ri:moon-line" : "ri:sun-line"
+          );
+          toggleGiscusTheme();
+        }
+      });
+  });
+</script>
+
+
+
+
+<meta name="generator" content="Hexo 7.0.0">
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+</head>
+<body class="font-sans bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-200 relative">
+  <header class="fixed w-full px-5 py-1 z-10 backdrop-blur-xl backdrop-saturate-150 border-b border-black/5">
+  <div class="max-auto">
+    <nav class="flex items-center text-base">
+      <a href="/" class="group">
+        <h2 class="font-medium tracking-tighterp text-l p-2">
+          <img class="w-5 mr-2 inline-block transition-transform group-hover:rotate-[30deg]" id="logo" src="/images/logo.svg" alt="Oncelane" />
+          Oncelane
+        </h2>
+      </a>
+      <div id="header-title" class="opacity-0 md:ml-2 md:mt-[0.1rem] text-xs font-medium whitespace-nowrap overflow-hidden overflow-ellipsis">
+        MIT6.5840 Lab1 实现
+      </div>
+      <div class="flex-1"></div>
+      <div class="flex items-center gap-3">
+        
+          <a class="hidden sm:flex" href="/archives">Posts</a>
+        
+        
+          
+            <a class="w-5 h-5 hidden sm:flex" title="Github" target="_blank" rel="noopener" href="https://github.com/xbmlz">
+              <iconify-icon width="20" icon="ri:github-line"></iconify-icon>
+            </a>
+          
+        
+        <a class="w-5 h-5 hidden sm:flex" title="Github" href="rss2.xml">
+          <iconify-icon width="20" icon="ri:rss-line"></iconify-icon>
+        </a>
+        <a class="w-5 h-5" title="toggle theme" id="toggle-dark">
+          <iconify-icon width="20" icon="" id="theme-icon"></iconify-icon>
+        </a>
+      </div>
+      <div class="flex items-center justify-center gap-3 ml-3 sm:hidden">
+        <span class="w-5 h-5" aria-hidden="true" role="img" id="open-menu">
+          <iconify-icon width="20" icon="carbon:menu" ></iconify-icon>
+        </span>
+        <span class="w-5 h-5 hidden" aria-hidden="true" role="img" id="close-menu">
+          <iconify-icon  width="20" icon="carbon:close" ></iconify-icon>
+        </span>
+      </div>
+    </nav>
+  </div>
+</header>
+<div id="menu-panel" class="h-0 overflow-hidden sm:hidden fixed left-0 right-0 top-12 bottom-0 z-10">
+  <div id="menu-content" class="relative z-20 bg-white/80 px-6 sm:px-8 py-2 backdrop-blur-xl -translate-y-full transition-transform duration-300">
+    <ul class="nav flex flex-col sm:flex-row text-sm font-medium">
+      
+        <li class="nav-portfolio sm:mx-2 border-b sm:border-0 border-black/5 last:border-0 hover:text-main">
+          <a href="/archives" class="flex h-12 sm:h-auto items-center">Posts</a>
+        </li>
+      
+    </ul>
+  </div>
+  <div class="mask bg-black/20 absolute inset-0"></div>
+</div>
+
+  <main class="pt-14">
+    <!-- css -->
+
+<link rel="stylesheet" href="/lib/fancybox/fancybox.min.css">
+
+
+<link rel="stylesheet" href="/lib/tocbot/tocbot.min.css">
+
+<!-- toc -->
+
+  <!-- tocbot -->
+<nav class="post-toc toc text-sm w-48 relative top-32 right-0 opacity-70 hidden lg:block" style="position: fixed !important;"></nav>
+
+
+<section class="px-6 max-w-prose mx-auto md:px-0">
+  <!-- header -->
+  <header class="overflow-hidden pt-6 pb-6 md:pt-12">
+    <div class="pt-4 md:pt-6">
+      <h1 id="article-title" class="text-[2rem] font-bold leading-snug mb-4 md:mb-6 md:text-[2.6rem]">
+        MIT6.5840 Lab1 实现
+      </h1>
+      <div>
+        <section class="flex items-center gap-3 text-sm">
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="carbon-calendar" ></iconify-icon>
+            <time>2024-04-05</time>
+          </span>
+          <span class="text-gray-400">·</span>
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="ic:round-access-alarm" ></iconify-icon>
+            <span>21 min</span>
+          </span>
+          <span class="text-gray-400">·</span>
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="icon-park-outline:font-search" ></iconify-icon>
+            <span>5k words</span>
+          </span>
+          
+        </section>
+      </div>
+    </div>
+  </header>
+  <!-- content -->
+  <article class="post-content prose m-auto slide-enter-content dark:prose-invert">
+    <h4 id="What-is-6-5840-about"><a href="#What-is-6-5840-about" class="headerlink" title="What is 6.5840 about?"></a>What is 6.5840 about?</h4><p>6.5840 is a core 12-unit graduate subject with lectures, readings, programming labs, an optional project, a mid-term exam, and a final exam. It will present abstractions and implementation techniques for engineering distributed systems. Major topics include <strong>fault tolerance, replication, and consistency</strong>. Much of the class consists of studying and discussing case studies of <strong>distributed systems.</strong> </p>
+<p>MIT6.5840（原6.824）是一个分布式系统课程，其课堂主要讲授分布式领域的论文，而实验部分则是由课程教授编写的测试框架组成。实验的难度很高，但最后完成实验所需要的代码量却丝毫不多。</p>
+<p>这很大程度得益于go简洁的语法，大概也只有go语言能让初学者在一天内完成语法级入门，并且立刻具有实现复杂实验的能力吧，可以说golang是一个非常神奇的语言。后续我大概会单独出一篇介绍在本实验需要留意的golang特性。</p>
+<p>实验本身是一直在迭代的，每年变化都不大，比如优化一下测试用例之类的。但是今年春季学期的MIT6.5840确实有一些可以称道的变化了，原本四个实验现如今增加到了五个，主要在LAB2的位置增加了一个简易kvserver的实验，不过影响不大。</p>
+<h4 id="LAB1"><a href="#LAB1" class="headerlink" title="LAB1"></a>LAB1</h4><p>Lab1具体要实现的算法过程称为mapReduce（分布式运算程序的编程框架），我们需要做的是填充mr文件夹下的coordinator.go, rpc.go, worker.go 这三个文件</p>
+<p>具体思路直接看官方代码 mrsequential.go，</p>
+<p>首先映入眼帘的是loadPlugin函数，它的输入是os.Args[1]，返回值是两个函数</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">mapf<span class="token punctuation">,</span> reducef <span class="token operator">:=</span> <span class="token function">loadPlugin</span><span class="token punctuation">(</span>os<span class="token punctuation">.</span>Args<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>os.Args[1]是我们在bash运行程序时指定的第二个参数</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">go run mrsequential.go wc.so pg*.txt<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>观察指令，程序运行指定的第二个参数是 <strong>wc.so</strong> ，对于.so后缀的文件，熟悉编译过程的肯定能往动态链接库的方面去猜测。事实上它确实跟共享库有着很深的渊源，但用法却着实不那么方便</p>
+<p>首先明确在C++中主程序运行时除了需要提供.lib .a .dll .so等库的源文件外，还必须提供头文件。头文件标识库里面提供了可以供外界使用的接口</p>
+<p>而且虽然动态链接库的链接发生在程序的执行过程，但是在编译环节，编译器仍然会<strong>执行链接检查</strong>,这个过程也是需要动态库的头文件参与进来的。虽然从文件的角度看，cpp的一个动态库就得由两个文件组成带来了些许麻烦，但它带来的帮助是巨大的</p>
+<p>(1)代码编写时候：由于有头文件的帮助，编写主程序的时候可以很方便的通过阅读源码，IDE智能提示等方式获知函数的参数，返回值等等，不需要编译也能得到错误提示。而且使用方式跟自己写的函数没什么两样</p>
+<p>(2)代码编译时：代码编译时可以由编译器提供正确性更强的检查，当然这是因为库的头文件也参与到了编译过程当中</p>
+<p>但是CPP也提供了另外一种方式加载动态库<strong>动态加载</strong>：动态加载仍然是运行时加载，但可以在程序运行时由我们决定何时加载指定的模块。</p>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// 按指定的模式打开动态链接库文件，并返回句柄</span>
+<span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">dlopen</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>filename<span class="token punctuation">,</span> <span class="token keyword">int</span> flags<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// 通过句柄获取共享对象或可执行文件中符号的地址</span>
+<span class="token keyword">void</span> <span class="token operator">*</span><span class="token function">dlsym</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>handle<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>symbol<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// 卸载打开的库</span>
+<span class="token keyword">int</span> <span class="token function">dlclose</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>handle<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>如果是动态加载动态库(dlopen(库名)/load(库名)等方法),则不需要头文件,只需要库文件.前提是调用方知道函数名和参数列表,返回值等信息,方可正确调用;</p>
+<p>样例如下：<br>在libcaculator.so中定义了add函数</p>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span> <span class="token function">add</span><span class="token punctuation">(</span><span class="token keyword">int</span> a<span class="token punctuation">,</span><span class="token keyword">int</span> b<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+	<span class="token keyword">return</span> <span class="token punctuation">(</span>a <span class="token operator">+</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在main中动态调用过程</p>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//函数指针</span>
+<span class="token keyword">typedef</span> <span class="token keyword">int</span> <span class="token punctuation">(</span><span class="token operator">*</span>CAC_FUNC<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">//打开动态链接库</span>
+handle <span class="token operator">=</span> <span class="token function">dlopen</span><span class="token punctuation">(</span><span class="token string">"./libcaculator.so"</span><span class="token punctuation">,</span> RTLD_LAZY<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">//获取一个函数</span>
+<span class="token operator">*</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span><span class="token operator">*</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">&amp;</span>cac_func<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token function">dlsym</span><span class="token punctuation">(</span>handle<span class="token punctuation">,</span> <span class="token string">"add"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">//使用函数</span>
+<span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"add: %d\n"</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token operator">*</span>cac_func<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">7</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">//关闭动态链接库</span>
+<span class="token function">dlclose</span><span class="token punctuation">(</span>handle<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">//输出：</span>
+<span class="token comment">//add: 9</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>再看看plugin的使用</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">p<span class="token punctuation">,</span> err <span class="token operator">:=</span> plugin<span class="token punctuation">.</span><span class="token function">Open</span><span class="token punctuation">(</span>filename<span class="token punctuation">)</span>
+
+xmapf<span class="token punctuation">,</span> err <span class="token operator">:=</span> p<span class="token punctuation">.</span><span class="token function">Lookup</span><span class="token punctuation">(</span><span class="token string">"Map"</span><span class="token punctuation">)</span>
+
+mapf <span class="token operator">:=</span> xmapf<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">func</span><span class="token punctuation">(</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>mr<span class="token punctuation">.</span>KeyValue<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>使用起来跟CPP动态库的动态加载方式是基本一致的，但是golang不支持主动关闭动态库，也就是说不支持热重载动态库功能，鉴于golang极致简洁的风格就原谅它了。<br>但是这种调用方式肯定不如CPP使用了头文件的方式，对于程序编写者来说是一种折磨。</p>
+<p>回到实验本身<br>对于官方的第一个例子wc.go，它所实现的功能就是词频统计相关</p>
+<p>Map函数</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">Map</span><span class="token punctuation">(</span>filename <span class="token builtin">string</span><span class="token punctuation">,</span> contents <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>mr<span class="token punctuation">.</span>KeyValue <span class="token punctuation">{</span>
+	<span class="token comment">// function to detect word separators.</span>
+	ff <span class="token operator">:=</span> <span class="token keyword">func</span><span class="token punctuation">(</span>r <span class="token builtin">rune</span><span class="token punctuation">)</span> <span class="token builtin">bool</span> <span class="token punctuation">{</span> <span class="token keyword">return</span> <span class="token operator">!</span>unicode<span class="token punctuation">.</span><span class="token function">IsLetter</span><span class="token punctuation">(</span>r<span class="token punctuation">)</span> <span class="token punctuation">}</span>
+
+	<span class="token comment">// split contents into an array of words.</span>
+	words <span class="token operator">:=</span> strings<span class="token punctuation">.</span><span class="token function">FieldsFunc</span><span class="token punctuation">(</span>contents<span class="token punctuation">,</span> ff<span class="token punctuation">)</span>
+
+	kva <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>mr<span class="token punctuation">.</span>KeyValue<span class="token punctuation">{</span><span class="token punctuation">}</span>
+	<span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> w <span class="token operator">:=</span> <span class="token keyword">range</span> words <span class="token punctuation">{</span>
+		kv <span class="token operator">:=</span> mr<span class="token punctuation">.</span>KeyValue<span class="token punctuation">{</span>w<span class="token punctuation">,</span> <span class="token string">"1"</span><span class="token punctuation">}</span>
+		kva <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>kva<span class="token punctuation">,</span> kv<span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+	<span class="token keyword">return</span> kva
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>以任何非字母符号作为分隔符，将文本文件分割成单词，然后存储到字符串数组，这些单词自然会有很多重复，但是这里不处理重复，为每一个单词加上“1”作为value就结束了。肯定有人跟我当时阅读源码时有相同的疑惑，这里直接用map不就能完成字符串统计了吗，对于词频统计来说确实如此，但是对于其他更复杂的任务就不能这么干。而且MapReduce是一种分布式计算框架，我们主要学习的是只是这种思想，不必纠结于此。</p>
+<p>Reduce函数</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">Reduce</span><span class="token punctuation">(</span>key <span class="token builtin">string</span><span class="token punctuation">,</span> values <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">{</span>
+	<span class="token comment">// return the number of occurrences of this word.</span>
+	<span class="token keyword">return</span> strconv<span class="token punctuation">.</span><span class="token function">Itoa</span><span class="token punctuation">(</span><span class="token function">len</span><span class="token punctuation">(</span>values<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>输入[hello : [“1”,”1”,”1”,”1”]]，输出1的个数，然后统计结果转成字符串形式，也就是“4”</p>
+<h4 id="MapReduce流程"><a href="#MapReduce流程" class="headerlink" title="MapReduce流程"></a>MapReduce流程</h4><p><img src="/2024/04/03/mit65840lab1shixian/2.png" alt="图片"></p>
+<p>源数据需要经过分片分给不同机器上的Mapper进行计算，计算结果称为intermidiate。然后对intermidiate经过一轮汇总后再分片，交由reducer处理，最后再汇总reducer的输出形成最终结果。</p>
+<p>因此每个worker（分布在不同主机上的程序）的任务都相当简单，从网络接收输入，执行各自的mapf或者reducerf，从网络输出结果。</p>
+<p>所以MapReducer的核心在于任务的分配和接收，任务具体如何执行并非重点。</p>
+<p>在现实中，无论是Map任务和Reduce任务，都是在不同现实地址的主机上的worker进程中运行的，在实验中虽然没法实现不同主机，但仍然可以用网络技术RPC和多进程来进行模拟。<br>负责分配任务的进程称为coordinator，它是MapReduce算法框架的核心，因为每个worker的视野里只有自己的任务，对于整个计算目标却一无所知，coordinator就负责把握全局视野。（在以前实验中它的名字还是master，改名的原因可能跟github将默认分支从master改名至main是一致的）</p>
+<p>一个很直观的MapReduce实现方法就是让coodinator主动通过网络通信，轮询worker进程</p>
+<ol>
+<li><p>worker是否处于无任务的空闲状态？如果空闲就通过一次RPC调用，分配实际任务，否则就找下一个worker</p>
+</li>
+<li><p>worker如果并非空闲，那么是否已经完成了任务？如果完成任务就接受worker的输出，放到自己的存储空间里暂存</p>
+</li>
+<li><p>worker除了空闲状态和完成任务状态，还有一个失败状态</p>
+<ol>
+<li><p>worker失联：可能worker已经完成了任务，但是却因为网络中断无法提交任务，可能worker进程直接就是挂掉了，可能只是这次的轮询丢包了，coordinator再询问一次说不定就联系上了。</p>
+</li>
+<li><p>worker没有失联，但是它因为故障重启过了，它不知道自己重启前被分配过任务。好在coordinator是知道的，当成任务失败即可。</p>
+</li>
+</ol>
+</li>
+</ol>
+<p>可以看到如果由coodinator来全权把握任务分配过程，实现起来是比较复杂的，coodinator要不停轮询来把握worker的状态。但是效率也是相对较高的，分配方式相当灵活，它可以根据机器的性能参数设置任务分配优先级实现最优分配，还可以根据任务的实时性的计算量来决定要让多少个worker并行以达到减少资源消耗的目的。不过这毕竟只是入门实验lab1，我们就不要奢求太多了。</p>
+<p>worker的状态只有worker自己最清楚，因此采用worker主动联系coordinator取任务的方式实现起来会简单很多，coordinator接受到worker的任务请求后从自己的未完成任务里取一个交付给worker就完事了，接收到worker的任务完成后也看情况接受就行</p>
+<p>具体实现思路就是worker周期性调用RPC请求任务，根据返回值判断任务有没有分配成功，成功就做，做完再调用RPC通知coordinator任务完成</p>
+<h4 id="Coordinator代码实现"><a href="#Coordinator代码实现" class="headerlink" title="Coordinator代码实现"></a>Coordinator代码实现</h4><p>coordinator对于任务状态的三种标识:</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">const</span> <span class="token punctuation">(</span> <span class="token comment">//task 的状态标识</span>
+	unassigned <span class="token operator">=</span> <span class="token boolean">iota</span> <span class="token comment">//task未分配</span>
+	working           <span class="token comment">//task已分配，未确认是否完成</span>
+	finish            <span class="token comment">//task已完成</span>
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>Coordinator的成员变量：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> Coordinator <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+	<span class="token comment">// Your definitions here.</span>
+	AllDone       <span class="token builtin">bool</span>       <span class="token comment">//标志：任务全部完成</span>
+	AllMapDone    <span class="token builtin">bool</span>       <span class="token comment">//标志：Map任务全部完成</span>
+	AllReduceDone <span class="token builtin">bool</span>       <span class="token comment">//标志：Reduce任务全部完成</span>
+	Mu            sync<span class="token punctuation">.</span>Mutex <span class="token comment">//Coordinator共享资源访问锁</span>
+	TaskMu        sync<span class="token punctuation">.</span>Mutex <span class="token comment">//task资源访问锁</span>
+	TaskTotalNum  <span class="token builtin">int</span>        <span class="token comment">//总任务数</span>
+	TaskLeft      <span class="token builtin">int</span>        <span class="token comment">//剩余未完成任务数</span>
+	TaskTotal     <span class="token punctuation">[</span><span class="token punctuation">]</span>mrTask   <span class="token comment">//任务数组</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>Task的成员变量：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> mrTask <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+	TaskType  <span class="token builtin">int</span>      <span class="token comment">//分辨是Map任务还是Reduce任务</span>
+	TaskState <span class="token builtin">int</span>      <span class="token comment">//三种任务状态：未分配/已分配但未确认完成/确认完成</span>
+	FileName  <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span> <span class="token comment">//任务参数</span>
+	NReduce   <span class="token builtin">int</span>
+	TaskId    <span class="token builtin">int</span>
+	RecuderId <span class="token builtin">int</span>
+	StartTime time<span class="token punctuation">.</span>Time <span class="token comment">//任务开始时间</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>有了明确定义后就很简单了<br>实验不要求实现Mapreduce算法中的split部分，我们就根据输入的文件数量生成对应的Map任务即可</p>
+<p>coordinator</p>
+<ol>
+<li><p>generateMapTask() 生成Map任务然后放到TaskTotal数组里</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Coordinator<span class="token punctuation">)</span> <span class="token function">generateMapTask</span><span class="token punctuation">(</span>file <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">,</span> NReduce <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">for</span> index<span class="token punctuation">,</span> FileName <span class="token operator">:=</span> <span class="token keyword">range</span> file <span class="token punctuation">{</span>
+		newTask <span class="token operator">:=</span> mrTask<span class="token punctuation">{</span>
+			TaskType<span class="token punctuation">:</span>  mapTask<span class="token punctuation">,</span>
+			TaskState<span class="token punctuation">:</span> unassigned<span class="token punctuation">,</span>
+			NReduce<span class="token punctuation">:</span>   NReduce<span class="token punctuation">,</span>
+			TaskId<span class="token punctuation">:</span>    index<span class="token punctuation">,</span>
+		<span class="token punctuation">}</span>
+		<span class="token comment">//使用append避免浅拷贝</span>
+		newTask<span class="token punctuation">.</span>FileName <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>newTask<span class="token punctuation">.</span>FileName<span class="token punctuation">,</span> FileName<span class="token punctuation">)</span>
+		c<span class="token punctuation">.</span>TaskTotal <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>c<span class="token punctuation">.</span>TaskTotal<span class="token punctuation">,</span> newTask<span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+	c<span class="token punctuation">.</span>TaskTotalNum <span class="token operator">=</span> <span class="token function">len</span><span class="token punctuation">(</span>c<span class="token punctuation">.</span>TaskTotal<span class="token punctuation">)</span>
+	c<span class="token punctuation">.</span>TaskLeft <span class="token operator">=</span> c<span class="token punctuation">.</span>TaskTotalNum
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+</li>
+<li><p>scheduler() 一开始调用generateMapTask()生成好map任务，等待map任务全部完成后再生成reduce任务</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Coordinator<span class="token punctuation">)</span> <span class="token function">Schedule</span><span class="token punctuation">(</span>files <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">,</span> NReduce <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	c<span class="token punctuation">.</span><span class="token function">generateMapTask</span><span class="token punctuation">(</span>files<span class="token punctuation">,</span> NReduce<span class="token punctuation">)</span>
+	<span class="token keyword">go</span> c<span class="token punctuation">.</span><span class="token function">HandleCrashTask</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token comment">// fmt.Println("success: generateMapTask :", c.TaskTotal)</span>
+
+	c<span class="token punctuation">.</span>AllDone <span class="token operator">=</span> <span class="token boolean">false</span>
+	c<span class="token punctuation">.</span>AllMapDone <span class="token operator">=</span> <span class="token boolean">false</span>
+	c<span class="token punctuation">.</span>AllReduceDone <span class="token operator">=</span> <span class="token boolean">false</span>
+	<span class="token keyword">for</span> <span class="token punctuation">{</span> <span class="token comment">//一秒检查一次可不可切换阶段</span>
+		<span class="token keyword">if</span> <span class="token operator">!</span>c<span class="token punctuation">.</span>AllMapDone <span class="token punctuation">{</span>
+			<span class="token keyword">if</span> c<span class="token punctuation">.</span><span class="token function">checkTaskDone</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+				c<span class="token punctuation">.</span>AllMapDone <span class="token operator">=</span> <span class="token boolean">true</span>
+				c<span class="token punctuation">.</span><span class="token function">generateReduceTask</span><span class="token punctuation">(</span>NReduce<span class="token punctuation">)</span>
+				<span class="token comment">// fmt.Println("AllMapDone")</span>
+			<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+				time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+			<span class="token punctuation">}</span>
+		<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token operator">!</span>c<span class="token punctuation">.</span>AllReduceDone <span class="token punctuation">{</span>
+			<span class="token keyword">if</span> c<span class="token punctuation">.</span><span class="token function">checkTaskDone</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+				c<span class="token punctuation">.</span>AllReduceDone <span class="token operator">=</span> <span class="token boolean">true</span>
+				c<span class="token punctuation">.</span>AllDone <span class="token operator">=</span> <span class="token boolean">true</span>
+				<span class="token comment">// fmt.Println("AllMapDone")s</span>
+			<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+				time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+			<span class="token punctuation">}</span>
+		<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> c<span class="token punctuation">.</span>AllDone <span class="token punctuation">{</span>
+			time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>Second <span class="token operator">*</span> <span class="token number">2</span><span class="token punctuation">)</span>
+			<span class="token keyword">break</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token comment">// fmt.Println("AllDone")</span>
+
+	<span class="token keyword">for</span> <span class="token punctuation">{</span>
+		time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+</li>
+<li><p>重点：AssignTasks()，这是coordinator的函数，但是不由coordinate自己调用，而是专用于worker远程调用，返回给worker的数据存放在reply结构体中。负责响应worker的任务请求。</p>
+</li>
+</ol>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> WorkerAskTask <span class="token keyword">struct</span> <span class="token punctuation">{</span> <span class="token comment">//此函数被调用本身说明了一切，不需要你来补充说明了</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> WorkerAskTaskReply <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+	<span class="token comment">//将任务参数返回给worker，因为是实验环境，返回任务参数就够了</span>
+	<span class="token comment">//现实中的MapReduce当然还需要把任务完整数据都传给worker</span>
+	Task mrTask
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Coordinator<span class="token punctuation">)</span> <span class="token function">AssignTasks</span><span class="token punctuation">(</span>args <span class="token operator">*</span>WorkerAskTask<span class="token punctuation">,</span> reply <span class="token operator">*</span>WorkerAskTaskReply<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+	c<span class="token punctuation">.</span>Mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	c<span class="token punctuation">.</span>TaskMu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	<span class="token keyword">defer</span> c<span class="token punctuation">.</span>Mu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token keyword">defer</span> c<span class="token punctuation">.</span>TaskMu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// fmt.Println("Coordinator get a askTask from worker")</span>
+	<span class="token comment">// for _, task := range c.TaskTotal {</span>
+	<span class="token comment">// 	fmt.Printf(" %d", task.TaskState)</span>
+	<span class="token comment">// }</span>
+	<span class="token comment">// fmt.Println(" ")</span>
+	<span class="token keyword">if</span> c<span class="token punctuation">.</span>AllDone <span class="token punctuation">{</span>
+		reply<span class="token punctuation">.</span>Task <span class="token operator">=</span> mrTask<span class="token punctuation">{</span>
+			TaskType<span class="token punctuation">:</span> finishTask<span class="token punctuation">,</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> c<span class="token punctuation">.</span>TaskLeft <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+		reply<span class="token punctuation">.</span>Task <span class="token operator">=</span> mrTask<span class="token punctuation">{</span>
+			TaskType<span class="token punctuation">:</span> waitForMonent<span class="token punctuation">,</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span> <span class="token comment">//遍历总任务表，找到一个未分配任务，将它分配出去，并设置task状态为工作中</span>
+		<span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token keyword">range</span> c<span class="token punctuation">.</span>TaskTotal <span class="token punctuation">{</span>
+			<span class="token keyword">if</span> c<span class="token punctuation">.</span>TaskTotal<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>TaskState <span class="token operator">==</span> unassigned <span class="token punctuation">{</span>
+				<span class="token comment">// fmt.Println("Coordinator assign worker a task,taskId = ", c.TaskTotal[i].TaskId)</span>
+				c<span class="token punctuation">.</span>TaskTotal<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>TaskState <span class="token operator">=</span> working
+				<span class="token comment">//记录任务被分配出去的时间</span>
+				c<span class="token punctuation">.</span>TaskTotal<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>StartTime <span class="token operator">=</span> time<span class="token punctuation">.</span><span class="token function">Now</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+				<span class="token comment">// fmt.Println("now the task", c.TaskTotal[i].TaskId, "have been set ", c.TaskTotal[i].TaskState)</span>
+				reply<span class="token punctuation">.</span>Task <span class="token operator">=</span> c<span class="token punctuation">.</span>TaskTotal<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
+				<span class="token keyword">break</span>
+			<span class="token punctuation">}</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span>
+	<span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<ol start="4">
+<li>ComfirmTaskFinish() 同样是供给worker调用的函数，用于确认任务确实完成了</li>
+</ol>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Coordinator<span class="token punctuation">)</span> <span class="token function">ComfirmTaskFinish</span><span class="token punctuation">(</span>args <span class="token operator">*</span>WorkerFinishTask<span class="token punctuation">,</span> reply <span class="token operator">*</span>WorkerFinTaskReply<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+	c<span class="token punctuation">.</span>TaskMu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token keyword">defer</span> c<span class="token punctuation">.</span>TaskMu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	<span class="token comment">// fmt.Println("Coordinator comfirm a task has finished,taskId =", args.Task.TaskId)</span>
+	<span class="token keyword">var</span> TaskId <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
+	<span class="token keyword">if</span> args<span class="token punctuation">.</span>Task<span class="token punctuation">.</span>TaskType <span class="token operator">==</span> mapTask <span class="token punctuation">{</span>
+		TaskId <span class="token operator">=</span> args<span class="token punctuation">.</span>Task<span class="token punctuation">.</span>TaskId
+
+	<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> args<span class="token punctuation">.</span>Task<span class="token punctuation">.</span>TaskType <span class="token operator">==</span> reduceTask <span class="token punctuation">{</span>
+		TaskId <span class="token operator">=</span> args<span class="token punctuation">.</span>Task<span class="token punctuation">.</span>RecuderId
+	<span class="token punctuation">}</span>
+	<span class="token comment">//既然worker已经返回了结果，说明任务当然是被分配过的woring状态</span>
+	<span class="token comment">//为什么还有这一行判断呢？这里跟后面的超时机制有关</span>
+	<span class="token keyword">if</span> c<span class="token punctuation">.</span>TaskTotal<span class="token punctuation">[</span>TaskId<span class="token punctuation">]</span><span class="token punctuation">.</span>TaskState <span class="token operator">==</span> working <span class="token punctuation">{</span>
+		c<span class="token punctuation">.</span>TaskTotal<span class="token punctuation">[</span>TaskId<span class="token punctuation">]</span><span class="token punctuation">.</span>TaskState <span class="token operator">=</span> finish
+		c<span class="token punctuation">.</span>TaskLeft<span class="token operator">--</span>
+	<span class="token punctuation">}</span>
+	<span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h4 id="worker代码实现"><a href="#worker代码实现" class="headerlink" title="worker代码实现"></a>worker代码实现</h4><p>worker的代码相对复杂一点，这个Worker函数就相当于main()函数，它的执行退出代表着整个MapReducer算法的结束，全部任务都被完成了，finishTask</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">const</span> <span class="token punctuation">(</span> <span class="token comment">//worker 获得的任务标识</span>
+	waitForMonent <span class="token operator">=</span> <span class="token boolean">iota</span> <span class="token comment">//等待标识</span>
+	mapTask              <span class="token comment">//map任务标识</span>
+	reduceTask           <span class="token comment">//reduce任务标识</span>
+	finishTask           <span class="token comment">//算法结束标识</span>
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>为什么需要有waitForMonent标识？这是因为reducer任务需要在全部map任务完成后才能生成和被分配。所以可以预见到肯定会出现一两个map任务还在计算，而一堆空闲worker进程在不断请求任务的情景，使用此标识告诉worker，没任务并不代表着算法结束了，请等会再来请求一次</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// main/mrworker.go calls this function.</span>
+<span class="token keyword">func</span> <span class="token function">Worker</span><span class="token punctuation">(</span>mapf <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>KeyValue<span class="token punctuation">,</span>
+	reducef <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+	<span class="token keyword">for</span> <span class="token punctuation">{</span>
+		curTask <span class="token operator">:=</span> <span class="token function">CallForATask</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+		<span class="token keyword">if</span> curTask<span class="token punctuation">.</span>TaskType <span class="token operator">==</span> waitForMonent <span class="token punctuation">{</span>
+			time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+			<span class="token keyword">continue</span>
+		<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> curTask<span class="token punctuation">.</span>TaskType <span class="token operator">==</span> mapTask <span class="token punctuation">{</span>
+			<span class="token function">ApplyMap</span><span class="token punctuation">(</span>mapf<span class="token punctuation">,</span> curTask<span class="token punctuation">)</span>
+		<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> curTask<span class="token punctuation">.</span>TaskType <span class="token operator">==</span> reduceTask <span class="token punctuation">{</span>
+			<span class="token function">ApplyReduce</span><span class="token punctuation">(</span>reducef<span class="token punctuation">,</span> curTask<span class="token punctuation">)</span>
+		<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> curTask<span class="token punctuation">.</span>TaskType <span class="token operator">==</span> finishTask <span class="token punctuation">{</span>
+			<span class="token keyword">break</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span>
+
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>既然coordinate只实现了任务分配，那么worker到底是如何完成MapReduce算法过程的呢？</p>
+<ol>
+<li>如果接受到的是Map任务，模仿mrsequential.go中的处理，打开任务filename指定的文件，读取文件内容并作为参数传递给mapf</li>
+</ol>
+<p>mrsequential.go:</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">intermediate <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>mr<span class="token punctuation">.</span>KeyValue<span class="token punctuation">{</span><span class="token punctuation">}</span>
+<span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> filename <span class="token operator">:=</span> <span class="token keyword">range</span> os<span class="token punctuation">.</span>Args<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">:</span><span class="token punctuation">]</span> <span class="token punctuation">{</span>
+	file<span class="token punctuation">,</span> err <span class="token operator">:=</span> os<span class="token punctuation">.</span><span class="token function">Open</span><span class="token punctuation">(</span>filename<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+		log<span class="token punctuation">.</span><span class="token function">Fatalf</span><span class="token punctuation">(</span><span class="token string">"cannot open %v"</span><span class="token punctuation">,</span> filename<span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+	content<span class="token punctuation">,</span> err <span class="token operator">:=</span> io<span class="token punctuation">.</span><span class="token function">ReadAll</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+		log<span class="token punctuation">.</span><span class="token function">Fatalf</span><span class="token punctuation">(</span><span class="token string">"cannot read %v"</span><span class="token punctuation">,</span> filename<span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+	file<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	kva <span class="token operator">:=</span> <span class="token function">mapf</span><span class="token punctuation">(</span>filename<span class="token punctuation">,</span> <span class="token function">string</span><span class="token punctuation">(</span>content<span class="token punctuation">)</span><span class="token punctuation">)</span>
+	intermediate <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>intermediate<span class="token punctuation">,</span> kva<span class="token operator">...</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<ol start="2">
+<li>那么worker的运算产生的中间文件intermediate该放到哪里呢？答案是直接写到硬盘里，先在本地暂存一会，每个文件都统计完之后，再通过网络传输文件给coordinator。当然传输过程并不是lab1的重点，我们直接让coordinator从硬盘里拿结果就是了，又不是真的在不同主机上。</li>
+</ol>
+<blockquote>
+<p>A reasonable naming convention for intermediate files is mr-X-Y, where X is the Map task number, and Y is the reduce task number.<br>The worker’s map task code will need a way to store intermediate key/value pairs in files in a way that can be correctly read back during reduce tasks. One possibility is to use Go’s encoding/json package. To write key/value pairs in JSON format to an open file:</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">enc <span class="token operator">:=</span> json<span class="token punctuation">.</span><span class="token function">NewEncoder</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span>
+<span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> kv <span class="token operator">:=</span> <span class="token operator">...</span> <span class="token punctuation">{</span>
+	err <span class="token operator">:=</span> enc<span class="token punctuation">.</span><span class="token function">Encode</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>kv<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>and to read such a file back:</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">
+<span class="token operator">&gt;</span>dec <span class="token operator">:=</span> json<span class="token punctuation">.</span><span class="token function">NewDecoder</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span>
+<span class="token operator">&gt;</span><span class="token keyword">for</span> <span class="token punctuation">{</span>
+ <span class="token keyword">var</span> kv KeyValue
+ <span class="token keyword">if</span> err <span class="token operator">:=</span> dec<span class="token punctuation">.</span><span class="token function">Decode</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>kv<span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+   <span class="token keyword">break</span>
+ <span class="token punctuation">}</span>
+ kva <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>kva<span class="token punctuation">,</span> kv<span class="token punctuation">)</span>
+<span class="token operator">&gt;</span><span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+</blockquote>
+<p>worker的ApplyMap()函数实现</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">ApplyMap</span><span class="token punctuation">(</span>mapf <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>KeyValue<span class="token punctuation">,</span> curTask mrTask<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+	<span class="token comment">//照抄mrsequential.go中的处理</span>
+	intermidiates <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>KeyValue<span class="token punctuation">{</span><span class="token punctuation">}</span>
+	<span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> fileName <span class="token operator">:=</span> <span class="token keyword">range</span> curTask<span class="token punctuation">.</span>FileName <span class="token punctuation">{</span>
+		file<span class="token punctuation">,</span> err <span class="token operator">:=</span> os<span class="token punctuation">.</span><span class="token function">Open</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span>
+		<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+			fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"fatel: Woker can't open file: "</span><span class="token punctuation">,</span> fileName<span class="token punctuation">)</span>
+		<span class="token punctuation">}</span>
+		content<span class="token punctuation">,</span> err <span class="token operator">:=</span> io<span class="token punctuation">.</span><span class="token function">ReadAll</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span>
+		<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+			fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"fatel: Woker can't read all of file: "</span><span class="token punctuation">,</span> fileName<span class="token punctuation">)</span>
+		<span class="token punctuation">}</span>
+		<span class="token comment">//添加到中间文件</span>
+		intermidiates <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>intermidiates<span class="token punctuation">,</span> <span class="token function">mapf</span><span class="token punctuation">(</span>fileName<span class="token punctuation">,</span> <span class="token function">string</span><span class="token punctuation">(</span>content<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token operator">...</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token comment">//存储中间文件-------</span>
+
+	numRecuce <span class="token operator">:=</span> curTask<span class="token punctuation">.</span>NReduce
+
+	midKVfileName <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">,</span> numRecuce<span class="token punctuation">)</span>
+	midFile <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>os<span class="token punctuation">.</span>File<span class="token punctuation">{</span><span class="token punctuation">}</span>
+	<span class="token keyword">var</span> midEnco <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>json<span class="token punctuation">.</span>Encoder<span class="token punctuation">{</span><span class="token punctuation">}</span>
+	<span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> numRecuce<span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">{</span>
+		midKVfileName<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"mr-"</span> <span class="token operator">+</span> strconv<span class="token punctuation">.</span><span class="token function">Itoa</span><span class="token punctuation">(</span>curTask<span class="token punctuation">.</span>TaskId<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">"-"</span> <span class="token operator">+</span> strconv<span class="token punctuation">.</span><span class="token function">Itoa</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span>
+		mFile<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> os<span class="token punctuation">.</span><span class="token function">Create</span><span class="token punctuation">(</span>midKVfileName<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span>
+		midFile <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>midFile<span class="token punctuation">,</span> mFile<span class="token punctuation">)</span>
+		mEnco <span class="token operator">:=</span> json<span class="token punctuation">.</span><span class="token function">NewEncoder</span><span class="token punctuation">(</span>mFile<span class="token punctuation">)</span>
+		midEnco <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>midEnco<span class="token punctuation">,</span> mEnco<span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token comment">//将intermediate 写入文件</span>
+	<span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> kv <span class="token operator">:=</span> <span class="token keyword">range</span> intermidiates <span class="token punctuation">{</span>
+		i <span class="token operator">:=</span> <span class="token function">ihash</span><span class="token punctuation">(</span>kv<span class="token punctuation">.</span>Key<span class="token punctuation">)</span> <span class="token operator">%</span> numRecuce
+		midEnco<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">Encode</span><span class="token punctuation">(</span>kv<span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token comment">//关闭打开的文件符</span>
+	<span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> file <span class="token operator">:=</span> <span class="token keyword">range</span> midFile <span class="token punctuation">{</span>
+		file<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token comment">//报告任务完成</span>
+	<span class="token function">CallForFinishATast</span><span class="token punctuation">(</span>curTask<span class="token punctuation">)</span>
+
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>MapTask结果如下</p>
+<p><img src="/" alt="图片"></p>
+<p>每一个执行MapTask的worker最后都会输出NReduce个文件，也就是MapTask的输出【key,value】通过官方提供的哈希算法平均分配到N个文件中，这种方式的好处在于它所生成的N个文件的大小是相似的，后续的Reducer任务分配起来就很方便了</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// use ihash(key) % NReduce to choose the reduce</span>
+<span class="token keyword">func</span> <span class="token function">ihash</span><span class="token punctuation">(</span>key <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token builtin">int</span> <span class="token punctuation">{</span>
+	<span class="token comment">// task number for each KeyValue emitted by Map.</span>
+	h <span class="token operator">:=</span> fnv<span class="token punctuation">.</span><span class="token function">New32a</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	h<span class="token punctuation">.</span><span class="token function">Write</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token function">byte</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">)</span>
+	<span class="token keyword">return</span> <span class="token function">int</span><span class="token punctuation">(</span>h<span class="token punctuation">.</span><span class="token function">Sum32</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&amp;</span> <span class="token number">0x7fffffff</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>worker的ApplyReduce()函数实现</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">ApplyReduce</span><span class="token punctuation">(</span>reducef <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token builtin">string</span><span class="token punctuation">,</span> curTask mrTask<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	files <span class="token operator">:=</span> curTask<span class="token punctuation">.</span>FileName
+	<span class="token comment">//将文件中的键值对按字典序排列</span>
+	intermidiates <span class="token operator">:=</span> <span class="token function">shuffle</span><span class="token punctuation">(</span>files<span class="token punctuation">)</span>
+
+	<span class="token comment">//借鉴的写法，生成随机名字的temp文件以防止文件名重复</span>
+
+	dir<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> os<span class="token punctuation">.</span><span class="token function">Getwd</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	file<span class="token punctuation">,</span> err <span class="token operator">:=</span> os<span class="token punctuation">.</span><span class="token function">CreateTemp</span><span class="token punctuation">(</span>dir<span class="token punctuation">,</span> <span class="token string">"mr-out-tempfile-"</span><span class="token punctuation">)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+		fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"failed: os.CreateTemp failde"</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token keyword">var</span> n <span class="token operator">=</span> <span class="token function">len</span><span class="token punctuation">(</span>intermidiates<span class="token punctuation">)</span>
+
+	<span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> n<span class="token punctuation">;</span> <span class="token punctuation">{</span>
+		j <span class="token operator">:=</span> i <span class="token operator">+</span> <span class="token number">1</span>
+		<span class="token keyword">for</span> j <span class="token operator">&lt;</span> n <span class="token operator">&amp;&amp;</span> intermidiates<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">.</span>Key <span class="token operator">==</span> intermidiates<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>Key <span class="token punctuation">{</span>
+			j<span class="token operator">++</span>
+		<span class="token punctuation">}</span>
+		<span class="token keyword">var</span> values <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span>
+		<span class="token keyword">for</span> k <span class="token operator">:=</span> i<span class="token punctuation">;</span> k <span class="token operator">&lt;</span> j<span class="token punctuation">;</span> k<span class="token operator">++</span> <span class="token punctuation">{</span>
+			values <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>values<span class="token punctuation">,</span> intermidiates<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">.</span>Value<span class="token punctuation">)</span>
+		<span class="token punctuation">}</span>
+		<span class="token comment">//收集key相同的键值对，交给reducef处理</span>
+		v <span class="token operator">:=</span> <span class="token function">reducef</span><span class="token punctuation">(</span>intermidiates<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>Key<span class="token punctuation">,</span> values<span class="token punctuation">)</span>
+
+		<span class="token comment">//fmt.Fprintf 写文件</span>
+		fmt<span class="token punctuation">.</span><span class="token function">Fprintf</span><span class="token punctuation">(</span>file<span class="token punctuation">,</span> <span class="token string">"%v %v\n"</span><span class="token punctuation">,</span> intermidiates<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>Key<span class="token punctuation">,</span> v<span class="token punctuation">)</span>
+
+		i <span class="token operator">=</span> j
+
+	<span class="token punctuation">}</span>
+	file<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	newFileName <span class="token operator">:=</span> <span class="token string">"mr-out-"</span> <span class="token operator">+</span> strconv<span class="token punctuation">.</span><span class="token function">Itoa</span><span class="token punctuation">(</span>curTask<span class="token punctuation">.</span>RecuderId<span class="token punctuation">)</span>
+	err <span class="token operator">=</span> os<span class="token punctuation">.</span><span class="token function">Rename</span><span class="token punctuation">(</span>file<span class="token punctuation">.</span><span class="token function">Name</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> dir<span class="token operator">+</span><span class="token string">"/"</span><span class="token operator">+</span>newFileName<span class="token punctuation">)</span>
+	<span class="token comment">// fmt.Println(file.Name())</span>
+	<span class="token comment">// fmt.Println(dir + "/" + newFileName)</span>
+	<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+		fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"failed: os.Rename faile err ="</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token comment">//报告任务完成</span>
+	<span class="token function">CallForFinishATast</span><span class="token punctuation">(</span>curTask<span class="token punctuation">)</span>
+
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这里有两个重要的细节</p>
+<p>一个是<strong>shuffle函数</strong>的实现</p>
+<p>另一个是<strong>随机文件名</strong>，完成Reducer任务后才将随机文件名重新命名</p>
+<p><strong>随机文件名：</strong></p>
+<p>为什么要这么做？因为worker如果中途因为崩溃了，（阅读实验源码，是通过os.exit(1)<br>实现的崩溃模拟</p>
+<p>它是来不及正确关闭文件或者销毁文件的，会留下一个写入一半且没有被正确关闭的文件</p>
+<p>那么交给下一个继承相同Reducer任务的worker处理不就好了？它如果发现相同id前辈已经写过一个mr-out-id的文件，那么就将前辈的文件删除，自己再创一个，单独这种情况确实没问题。</p>
+<p>但考虑到其他情况，这样就不可行了，这跟我们后面实现的任务超时重新分配的机制有关：如果一个任务执行的太久了也没有得到返回，coordinator会认为任务失败，回收任务并重新分配，问题就在这里。任务只是超时了，worker并不一定处于死亡状态(os.exit(1))，它可能真的只是因为做的太慢，但worker还健在，还在写文件呢！</p>
+<p>然后就会发生两个worker对同一个文件同时写入的操作，或者后辈把前辈正在写的文件删除了，这是很严重的bug</p>
+<p>接下来讲shuffle</p>
+<p>shuffle代码实现：</p>
+<p>输入目标文件，使用decoder解码不断获得KeyValue类型的数据，全部读取到intermidiates里面然后用官方写好的sort接口按字典序排序就行</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">shuffle</span><span class="token punctuation">(</span>files <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>KeyValue <span class="token punctuation">{</span>
+
+	<span class="token keyword">var</span> intermidiates <span class="token punctuation">[</span><span class="token punctuation">]</span>KeyValue
+	<span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> fileName <span class="token operator">:=</span> <span class="token keyword">range</span> files <span class="token punctuation">{</span>
+		file<span class="token punctuation">,</span> err <span class="token operator">:=</span> os<span class="token punctuation">.</span><span class="token function">Open</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span>
+		<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+			fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"failed: shuffle open file "</span><span class="token punctuation">,</span> fileName<span class="token punctuation">,</span> <span class="token string">" failed, error ="</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+		<span class="token punctuation">}</span>
+		Decode <span class="token operator">:=</span> json<span class="token punctuation">.</span><span class="token function">NewDecoder</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span>
+
+		<span class="token keyword">for</span> <span class="token punctuation">{</span>
+			<span class="token keyword">var</span> kv KeyValue
+			err <span class="token operator">=</span> Decode<span class="token punctuation">.</span><span class="token function">Decode</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>kv<span class="token punctuation">)</span>
+			<span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+				<span class="token keyword">break</span>
+			<span class="token punctuation">}</span>
+
+			intermidiates <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>intermidiates<span class="token punctuation">,</span> kv<span class="token punctuation">)</span>
+		<span class="token punctuation">}</span>
+		file<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+
+	sort<span class="token punctuation">.</span><span class="token function">Sort</span><span class="token punctuation">(</span><span class="token function">ByKey</span><span class="token punctuation">(</span>intermidiates<span class="token punctuation">)</span><span class="token punctuation">)</span>
+	<span class="token keyword">return</span> intermidiates
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>主要代码就是这些，下面再讲讲超时重分配的细节</p>
+<p>在coordinator.go中</p>
+<p>HandleCrashTask()是被go关键字挂起来的一个协程函数体</p>
+<p>它用于寻找coordinator中超时未完成的任务，将它们的任务状态从working退化为unassigned，这样别的worker来申请任务的时候，coordinator就能继续分配它们了。</p>
+<p>这也是在为什么在 ComfirmTaskFinish()函数中要求任务返回的时候要重新判断coordinator登记的任务状态还是不是working的原因</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Coordinator<span class="token punctuation">)</span> <span class="token function">HandleCrashTask</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">for</span> <span class="token punctuation">{</span>
+		time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+		c<span class="token punctuation">.</span>TaskMu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+		<span class="token keyword">if</span> c<span class="token punctuation">.</span>AllDone <span class="token punctuation">{</span>
+			c<span class="token punctuation">.</span>TaskMu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+			<span class="token keyword">break</span>
+		<span class="token punctuation">}</span>
+		<span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token keyword">range</span> c<span class="token punctuation">.</span>TaskTotal <span class="token punctuation">{</span>
+			<span class="token keyword">if</span> time<span class="token punctuation">.</span><span class="token function">Since</span><span class="token punctuation">(</span>c<span class="token punctuation">.</span>TaskTotal<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>StartTime<span class="token punctuation">)</span> <span class="token operator">&gt;</span> <span class="token number">5</span><span class="token operator">*</span>time<span class="token punctuation">.</span>Second <span class="token operator">&amp;&amp;</span> c<span class="token punctuation">.</span>TaskTotal<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>TaskState <span class="token operator">==</span> working <span class="token punctuation">{</span>
+				<span class="token comment">// fmt.Println("task", c.TaskTotal[i].TaskId, "time out :", time.Since(c.TaskTotal[i].StartTime))</span>
+				c<span class="token punctuation">.</span>TaskTotal<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>TaskState <span class="token operator">=</span> unassigned
+				c<span class="token punctuation">.</span>TaskTotal<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>StartTime <span class="token operator">=</span> time<span class="token punctuation">.</span><span class="token function">Now</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+			<span class="token punctuation">}</span>
+		<span class="token punctuation">}</span>
+		c<span class="token punctuation">.</span>TaskMu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>自此就能完全通过lab1的全部测试了！这次试验对于锁的使用非常简单，但是在后面实验就不是这样了</p>
+<p><img src="/2024/04/03/mit65840lab1shixian/3.png"></p>
+
+  </article>
+  <!-- tag -->
+  <div class="mt-12 pt-6 border-t border-gray-200">
+    
+      
+        <span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 m-1 text-sm rounded-md transition-colors hover:bg-gray-200">
+          <a href="/tags/MIT6-5840/">MIT6.5840</a>
+        </span>
+      
+    
+  </div>
+  <!-- prev and next -->
+  <div class="flex justify-between mt-12 pt-6 border-t border-gray-200">
+    <div>
+      
+        <a href="/2024/04/04/mit65840lab2shixian/" class="text-sm text-gray-400 hover:text-gray-500 flex justify-center">
+          <iconify-icon width="20" icon="ri:arrow-left-s-line" data-inline="false"></iconify-icon>
+          MIT6.5840 Lab2 实现
+        </a>
+      
+    </div>
+    <div>
+      
+        <a href="/2024/03/16/gerendajianbokejiaochengpart2/" class="text-sm text-gray-400 hover:text-gray-500 flex justify-center">
+          个人搭建博客教程-part2
+          <iconify-icon width="20" icon="ri:arrow-right-s-line" data-inline="false"></iconify-icon>
+        </a>
+      
+    </div>
+  </div>
+  <!-- comment -->
+  <div class="article-comments mt-12">
+    
+
+  </div>
+</section>
+<!-- js inspect -->
+
+<script src="/lib/clipboard.min.js"></script>
+
+
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+        preferredFont: "TeX",
+        availableFonts: ["STIX","TeX"],
+        linebreaks: { automatic:true },
+        EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
+    },
+    tex2jax: {
+        inlineMath: [ ["$", "$"], ["\\(","\\)"] ],
+        processEscapes: true,
+        ignoreClass: "tex2jax_ignore|dno",
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        equationNumbers: { autoNumber: "AMS" },
+        noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } },
+        Macros: { href: "{}" }
+    },
+    messageStyle: "none"
+  });
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+  $(document).ready(() => {
+    const maraidConfig = {
+      theme: "default",
+      logLevel: 3,
+      flowchart: { curve: "linear" },
+      gantt: { axisFormat: "%m/%d/%Y" },
+      sequence: { actorMargin: 50 },
+    };
+    mermaid.initialize(maraidConfig);
+  });
+</script>
+
+
+
+<script src="/lib/fancybox/fancybox.umd.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+    $('.post-content').each(function(i){
+      $(this).find('img').each(function(){
+        if ($(this).parent().hasClass('fancybox') || $(this).parent().is('a')) return;
+        var alt = this.alt;
+        if (alt) $(this).after('<span class="fancybox-alt">' + alt + '</span>');
+        $(this).wrap('<a class="fancybox-img" href="' + this.src + '" data-fancybox=\"gallery\" data-caption="' + alt + '"></a>')
+      });
+      $(this).find('.fancybox').each(function(){
+        $(this).attr('rel', 'article' + i);
+      });
+    });
+
+    Fancybox.bind('[data-fancybox="gallery"]', {
+        // options
+    })
+  })
+</script>
+
+<!-- tocbot begin -->
+
+<script src="/lib/tocbot/tocbot.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+      tocbot.init({
+        // Where to render the table of contents.
+        tocSelector: '.post-toc',
+        // Where to grab the headings to build the table of contents.
+        contentSelector: '.post-content',
+        // Which headings to grab inside of the contentSelector element.
+        headingSelector: 'h1, h2, h3',
+        // For headings inside relative or absolute positioned containers within content.
+        hasInnerContainers: true,
+    });
+  })
+</script>
+<!-- tocbot end -->
+
+
+  </main>
+  <footer class="flex flex-col h-40 items-center justify-center text-gray-400 text-sm">
+  <!-- busuanzi -->
+  
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<!-- Busuanzi Analytics -->
+<div class="flex items-center gap-2">
+  <span>Visitors</span>
+  <span id="busuanzi_value_site_uv"></span>
+  <span>Page Views</span>
+  <span id="busuanzi_value_site_pv"></span>
+</div>
+<!-- End Busuanzi Analytics -->
+
+
+  <!-- copyright -->
+  <div class="flex items-center gap-2">
+    <a target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" style="color: inherit;">CC BY-NC-SA 4.0</a>
+    <span>© 2022</span>
+    <iconify-icon width="18" icon="emojione-monotone:maple-leaf" ></iconify-icon>
+    <a href="https://github.com/xbmlz" target="_blank" rel="noopener noreferrer">xbmlz</a>
+  </div>
+  <!-- powered by -->
+  <div class="flex items-center gap-2">
+    <span>Powered by</span>
+    <a href="https://hexo.io/" target="_blank" rel="noopener noreferrer">Hexo</a>
+    <span>&</span>
+    <a href="https://github.com/xbmlz/hexo-theme-maple" target="_blank" rel="noopener noreferrer">Maple</a>
+  </div>
+
+</footer>
+
+  <div class="back-to-top box-border fixed right-6 z-1024 -bottom-20 rounded py-1 px-1 bg-slate-900 opacity-60 text-white cursor-pointer text-center dark:bg-slate-600">
+    <span class="flex justify-center items-center text-sm">
+      <iconify-icon width="18" icon="ion:arrow-up-c" id="go-top"></iconify-icon>
+      <span id="scrollpercent"><span>0</span> %</span>
+    </span>
+  </div>
+  
+<script src="/js/main.js"></script>
+
+
+  <script>
+    $(document).ready(function () {
+      const mapleCount = "10";
+      const speed = "0.5";
+      const mapleEl = document.getElementById("maple");
+      const maples = Array.from({ length: mapleCount }).map(() => {
+        const maple = document.createElement("div");
+        const scale = Math.random() * 0.5 + 0.5;
+        const offset = Math.random() * 2 - 1;
+        const x = Math.random() * mapleEl.clientWidth;
+        const y = -Math.random() * mapleEl.clientHeight;
+        const duration = 10 / speed;
+        const delay = -duration;
+        maple.className = "maple";
+        maple.style.width = `${24 * scale}px`;
+        maple.style.height = `${24 * scale}px`;
+        maple.style.left = `${x}px`;
+        maple.style.top = `${y}px`;
+        maple.style.setProperty("--maple-fall-offset", offset);
+        maple.style.setProperty("--maple-fall-height", `${Math.abs(y) + mapleEl.clientHeight}px`);
+        maple.style.animation = `fall ${duration}s linear infinite`;
+        maple.style.animationDelay = `${delay}s`;
+        mapleEl.appendChild(maple)
+        return maple
+      })
+    });
+  </script>
+  
+
+
+  <div class="fixed top-0 bottom-0 left-0 right-0 pointer-events-none print:hidden" id="maple"></div>
+</body>
+
+</html>

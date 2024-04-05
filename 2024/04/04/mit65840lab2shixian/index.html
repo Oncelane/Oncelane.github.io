@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+
+
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+  <meta name="author" content="Xiur">
+
+
+  <meta name="subtitle" content="闲来记事">
+
+
+  <meta name="description" content="已巷的个人小站">
+
+
+
+<title>MIT6.5840 Lab2 实现 | Oncelane</title>
+
+
+
+<link rel="icon" href="/favicon.png">
+
+
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/nprogress/nprogress.css">
+
+
+
+<script src="/lib/jquery.min.js"></script>
+
+
+<script src="/lib/iconify-icon.min.js"></script>
+
+
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+  };
+</script>
+
+
+<script src="/lib/nprogress/nprogress.js"></script>
+
+<script>
+  $(document).ready(() => {
+    NProgress.configure({
+      showSpinner: false,
+    });
+    NProgress.start();
+    $("#nprogress .bar").css({
+      background: "#de7441",
+    });
+    $("#nprogress .peg").css({
+      "box-shadow": "0 0 2px #de7441, 0 0 4px #de7441",
+    });
+    $("#nprogress .spinner-icon").css({
+      "border-top-color": "#de7441",
+      "border-left-color": "#de7441",
+    });
+    setTimeout(function () {
+      NProgress.done();
+      $(".fade").removeClass("out");
+    }, 800);
+  });
+</script>
+
+<script>
+  (function () {
+    const prefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+    if (setting === "dark" || (prefersDark && setting !== "light"))
+      document.documentElement.classList.toggle("dark", true);
+    let isDark = document.documentElement.classList.contains("dark");
+  })();
+
+  $(document).ready(function () {
+    // init icon
+    const prefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = document.documentElement.classList.contains("dark");
+    $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
+
+    function toggleGiscusTheme() {
+      const isDark = document.documentElement.classList.contains("dark");
+      const giscusFrame = document.querySelector("iframe.giscus-frame");
+      if (giscusFrame) {
+        giscusFrame.contentWindow.postMessage(
+          {
+            giscus: {
+              setConfig: {
+                theme: isDark ? "dark" : "light",
+              },
+            },
+          },
+          "https://giscus.app"
+        );
+      }
+    }
+
+
+    // toggle dark mode
+    function toggleDark() {
+      let isDark = document.documentElement.classList.contains("dark");
+      const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+      isDark = !isDark;
+      document.documentElement.classList.toggle("dark", isDark);
+      $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
+      if (prefersDark === isDark) {
+        localStorage.setItem("hexo-color-scheme", "auto");
+      } else {
+        localStorage.setItem("hexo-color-scheme", isDark ? "dark" : "light");
+      }
+      toggleGiscusTheme();
+    }
+    $("#toggle-dark").click(toggleDark);
+
+    // listen dark mode change
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", (e) => {
+        const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+        if (setting === "auto") {
+          document.documentElement.classList.toggle("dark", e.matches);
+          $("#theme-icon").attr(
+            "icon",
+            e.matches ? "ri:moon-line" : "ri:sun-line"
+          );
+          toggleGiscusTheme();
+        }
+      });
+  });
+</script>
+
+
+
+
+<meta name="generator" content="Hexo 7.0.0">
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+</head>
+<body class="font-sans bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-200 relative">
+  <header class="fixed w-full px-5 py-1 z-10 backdrop-blur-xl backdrop-saturate-150 border-b border-black/5">
+  <div class="max-auto">
+    <nav class="flex items-center text-base">
+      <a href="/" class="group">
+        <h2 class="font-medium tracking-tighterp text-l p-2">
+          <img class="w-5 mr-2 inline-block transition-transform group-hover:rotate-[30deg]" id="logo" src="/images/logo.svg" alt="Oncelane" />
+          Oncelane
+        </h2>
+      </a>
+      <div id="header-title" class="opacity-0 md:ml-2 md:mt-[0.1rem] text-xs font-medium whitespace-nowrap overflow-hidden overflow-ellipsis">
+        MIT6.5840 Lab2 实现
+      </div>
+      <div class="flex-1"></div>
+      <div class="flex items-center gap-3">
+        
+          <a class="hidden sm:flex" href="/archives">Posts</a>
+        
+        
+          
+            <a class="w-5 h-5 hidden sm:flex" title="Github" target="_blank" rel="noopener" href="https://github.com/xbmlz">
+              <iconify-icon width="20" icon="ri:github-line"></iconify-icon>
+            </a>
+          
+        
+        <a class="w-5 h-5 hidden sm:flex" title="Github" href="rss2.xml">
+          <iconify-icon width="20" icon="ri:rss-line"></iconify-icon>
+        </a>
+        <a class="w-5 h-5" title="toggle theme" id="toggle-dark">
+          <iconify-icon width="20" icon="" id="theme-icon"></iconify-icon>
+        </a>
+      </div>
+      <div class="flex items-center justify-center gap-3 ml-3 sm:hidden">
+        <span class="w-5 h-5" aria-hidden="true" role="img" id="open-menu">
+          <iconify-icon width="20" icon="carbon:menu" ></iconify-icon>
+        </span>
+        <span class="w-5 h-5 hidden" aria-hidden="true" role="img" id="close-menu">
+          <iconify-icon  width="20" icon="carbon:close" ></iconify-icon>
+        </span>
+      </div>
+    </nav>
+  </div>
+</header>
+<div id="menu-panel" class="h-0 overflow-hidden sm:hidden fixed left-0 right-0 top-12 bottom-0 z-10">
+  <div id="menu-content" class="relative z-20 bg-white/80 px-6 sm:px-8 py-2 backdrop-blur-xl -translate-y-full transition-transform duration-300">
+    <ul class="nav flex flex-col sm:flex-row text-sm font-medium">
+      
+        <li class="nav-portfolio sm:mx-2 border-b sm:border-0 border-black/5 last:border-0 hover:text-main">
+          <a href="/archives" class="flex h-12 sm:h-auto items-center">Posts</a>
+        </li>
+      
+    </ul>
+  </div>
+  <div class="mask bg-black/20 absolute inset-0"></div>
+</div>
+
+  <main class="pt-14">
+    <!-- css -->
+
+<link rel="stylesheet" href="/lib/fancybox/fancybox.min.css">
+
+
+<link rel="stylesheet" href="/lib/tocbot/tocbot.min.css">
+
+<!-- toc -->
+
+  <!-- tocbot -->
+<nav class="post-toc toc text-sm w-48 relative top-32 right-0 opacity-70 hidden lg:block" style="position: fixed !important;"></nav>
+
+
+<section class="px-6 max-w-prose mx-auto md:px-0">
+  <!-- header -->
+  <header class="overflow-hidden pt-6 pb-6 md:pt-12">
+    <div class="pt-4 md:pt-6">
+      <h1 id="article-title" class="text-[2rem] font-bold leading-snug mb-4 md:mb-6 md:text-[2.6rem]">
+        MIT6.5840 Lab2 实现
+      </h1>
+      <div>
+        <section class="flex items-center gap-3 text-sm">
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="carbon-calendar" ></iconify-icon>
+            <time>2024-04-05</time>
+          </span>
+          <span class="text-gray-400">·</span>
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="ic:round-access-alarm" ></iconify-icon>
+            <span>8 min</span>
+          </span>
+          <span class="text-gray-400">·</span>
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="icon-park-outline:font-search" ></iconify-icon>
+            <span>2.1k words</span>
+          </span>
+          
+        </section>
+      </div>
+    </div>
+  </header>
+  <!-- content -->
+  <article class="post-content prose m-auto slide-enter-content dark:prose-invert">
+    <h4 id="LAB2"><a href="#LAB2" class="headerlink" title="LAB2"></a>LAB2</h4><blockquote>
+<p>Introduction<br>In this lab you will build a key/value server for a single machine that ensures that each operation is executed exactly once despite network failures and that the operations are linearizable. Later labs will replicate a server like this one to handle server crashes.</p>
+<p>Clients can send three different RPCs to the key/value server: Put(key, value), Append(key, arg), and Get(key). The server maintains an in-memory map of key/value pairs. Keys and values are strings. Put(key, value) installs or replaces the value for a particular key in the map, Append(key, arg) appends arg to key’s value and returns the old value, and Get(key) fetches the current value for the key. A Get for a non-existent key should return an empty string. An Append to a non-existent key should act as if the existing value were a zero-length string. Each client talks to the server through a Clerk with Put/Append/Get methods. A Clerk manages RPC interactions with the server.</p>
+</blockquote>
+<p>大意就是客户端cleck会使用put，Append，和Get这三个RPC调用server服务器的kv数据库，我们需要保证在单服务器，多客户端，网络不可靠（丢包率巨高的网络环境）下<strong>零错误</strong>，<strong>线性</strong>地完成所有客户端调用请求</p>
+<p>这个实验体验下来还是非常简单的，很快就能完成，lab2的kvserver主要是为了与Lab3的raft实现形成联动，最终在lab4实现多服务器的容错kv数据库</p>
+<p>本节实验主要编写kvsrv文件夹下的client.go，server.go</p>
+<h5 id="Key-value-server-with-no-network-failures-easy"><a href="#Key-value-server-with-no-network-failures-easy" class="headerlink" title="Key/value server with no network failures (easy)"></a><strong>Key/value server with no network failures (easy)</strong></h5><p>这个要求非常简单，既然是kvserver，直接在服务器端使用map[string]string 哈希表作为数据库的存储结构即可</p>
+<p>受到lab1的启发，我在代码中额外实现了简单的基于哈希算法的缓存分片</p>
+<p>Server使用maps []map[string]string作为存储结构，对每一个需要操作的key通过哈希算法散列后落到0-N范围内的某个固定值，然后对这个key的所有操作就可以都在maps[i]上进行了，客观上增加了一次哈希计算，但也减少了在哈希表中发生哈希碰撞的概率。</p>
+<p><img src="/4.png" alt="缓存分片"></p>
+<p>代码实现：</p>
+<p><strong>哈希散列算法：</strong></p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">ihash</span><span class="token punctuation">(</span>key <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token builtin">int</span> <span class="token punctuation">{</span>
+	<span class="token comment">// task number for each KeyValue emitted by Map.</span>
+	h <span class="token operator">:=</span> fnv<span class="token punctuation">.</span><span class="token function">New32a</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	h<span class="token punctuation">.</span><span class="token function">Write</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token function">byte</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">)</span>
+	<span class="token keyword">return</span> <span class="token function">int</span><span class="token punctuation">(</span>h<span class="token punctuation">.</span><span class="token function">Sum32</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&amp;</span> <span class="token number">0x7fffffff</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>使用方法：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>kv <span class="token operator">*</span>KVServer<span class="token punctuation">)</span> <span class="token function">ApplyGet</span><span class="token punctuation">(</span>Key <span class="token operator">*</span><span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">{</span>
+	<span class="token keyword">return</span> kv<span class="token punctuation">.</span>maps<span class="token punctuation">[</span><span class="token function">ihash</span><span class="token punctuation">(</span><span class="token operator">*</span>Key<span class="token punctuation">)</span><span class="token operator">%</span>kv<span class="token punctuation">.</span>nMap<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token operator">*</span>Key<span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>kv <span class="token operator">*</span>KVServer<span class="token punctuation">)</span> <span class="token function">ApplyPut</span><span class="token punctuation">(</span>Key <span class="token operator">*</span><span class="token builtin">string</span><span class="token punctuation">,</span> Value <span class="token operator">*</span><span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	index <span class="token operator">:=</span> <span class="token function">ihash</span><span class="token punctuation">(</span><span class="token operator">*</span>Key<span class="token punctuation">)</span> <span class="token operator">%</span> kv<span class="token punctuation">.</span>nMap
+	kv<span class="token punctuation">.</span>maps<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token operator">*</span>Key<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token operator">*</span>Value
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>kv <span class="token operator">*</span>KVServer<span class="token punctuation">)</span> <span class="token function">ApplyAppend</span><span class="token punctuation">(</span>Key <span class="token operator">*</span><span class="token builtin">string</span><span class="token punctuation">,</span> Value <span class="token operator">*</span><span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">{</span>
+	index <span class="token operator">:=</span> <span class="token function">ihash</span><span class="token punctuation">(</span><span class="token operator">*</span>Key<span class="token punctuation">)</span> <span class="token operator">%</span> kv<span class="token punctuation">.</span>nMap
+	preValue <span class="token operator">:=</span> kv<span class="token punctuation">.</span>maps<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token operator">*</span>Key<span class="token punctuation">]</span>
+	kv<span class="token punctuation">.</span>maps<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token operator">*</span>Key<span class="token punctuation">]</span> <span class="token operator">+=</span> <span class="token operator">*</span>Value
+	<span class="token keyword">return</span> preValue
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>类似的思想还有一致性哈希算法<br>一致性哈希算法将整个哈希值空间映射成一个按顺时针方向组织的虚拟圆环,使用哈希算法算出数据哈希值，然后根据哈希值的位置沿圆环顺时针查找，将数据分配到第一个遇到的集群节点进行缓存。</p>
+<p>实现思路：<br>1.对不同节点服务器的某些参数(mac地址、IP地址等)进行hash计算，用hash值对2^32取模，确定当前服务器落在环某一个节点上<br>2.数据存储时，对指定的key进行hash计算，然后用hash值对2^32取模，确定数据落在环的哪一个节点上，得到环的节点值之后，顺时针方向找到遇到的第一台服务器，这台服务器就是存储当前数据的地方。</p>
+<p><img src="/5.png" alt="一致性哈希算法"></p>
+<p>一致性哈希算法有两大优点：<br>减少节点：服务器2发生故障，存在上面的数据都需要迁移，那么，此时只需要迁移服务器1与服务器2之间的数据B、C到服务器3即可。</p>
+<p>增加节点：在数据B、C之间添加服务器4，那么只需要迁移存储在服务器2上的数据B到服务器4即可。</p>
+<p>1）可扩展性。一致性哈希算法保证了增加或减少服务器时，数据存储的改变最少,相比传统哈希算法大大节省了数据移动的开销。</p>
+<p>2） 更好地适应数据的快速增长。</p>
+<p>不过本次实验只是单服务器的简单kvserver，并不需要一致性哈希的这些优点，只是作为知识点补充</p>
+<h5 id="Key-value-server-with-dropped-messages-easy"><a href="#Key-value-server-with-dropped-messages-easy" class="headerlink" title="Key/value server with dropped messages (easy)"></a><strong>Key/value server with dropped messages (easy)</strong></h5><p>当加入了不稳定网络因素后，情况一下会变得复杂很多，不稳定网络会造成包的延迟，包的丢失。为了保证服务端能收到请求，客户端能得到响应，必须进行客户端的<strong>重复请求</strong>和服务端<strong>重复响应</strong>。</p>
+<p><strong>客户端重复请求：</strong></p>
+<p>客户端的重复请求很好解决，因为RPC调用本身是一定会有返回的，当RPC请求返回的时候如果为false，就说明请求发生了错误，例如超时未送达，超时未响应等。这个时候客户端立刻重发上一次请求即可，代码实现就是用一个while循环一直不停尝试。</p>
+<p><strong>服务端的应对：</strong></p>
+<p>由于不稳定网络的因素，服务端可能多次收到同一个客户端的多次相同请求，重复的get请求还好处理，因为get请求是<strong>安全的</strong> <strong>幂等的</strong> </p>
+<p>“安全”则是指请求方法不会破坏服务器上的资源<br>“幂等”指的是多次执行相同的操作，结果都是相同的，即多次“幂”后结果“相等”</p>
+<p>想对应的，put和append请求就是既不安全，也不幂等。大多数情况下在数据库里重复执行了本不该重复的put和append都会造成数据错乱。</p>
+<p>因此一个显而易见的做法是给每一个来自客户端的请求加上唯一标识，服务器每次应用put和append操作前都要检查之前是否已经应用过相同的命令，若有，则可以跳过应用到数据库的过程，直接返回结果给客户端</p>
+<p>但是为了解决重传问题，难道还需要在每次应用操作前搜索全部的历史操作检查重复吗？或者干脆再建立一个哈希集合专门存放历史操作的唯一标识？代价未免太大了。</p>
+<p>好在由于客户端只会重传上一个没得到结果的操作，而且在得到确认结果前绝不会继续请求新的操作，我们得以缩小服务端用于保存历史操作的范围</p>
+<p>即服务器仅仅为每一个客户端保存它的上一次操作应返回的结果，如果同一个客户端的新的操作到来，说明旧的操作已经被客户端确认了，这就可以丢弃掉上一次操作，仅覆盖保存新的操作即可</p>
+<p>具体实现如下</p>
+<h5 id="client-go的代码实现"><a href="#client-go的代码实现" class="headerlink" title="client.go的代码实现"></a><strong>client.go的代码实现</strong></h5><p>为clerk 增加了两个成员，使用随机数作为身份标识的clientid，还有发送请求的序列号</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> Clerk <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+	server       <span class="token operator">*</span>labrpc<span class="token punctuation">.</span>ClientEnd
+	clientId     <span class="token builtin">int64</span>
+	latestOffset <span class="token builtin">int</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>客户端生成时候，指定一个随机数作为身份标识，设置offset为0</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">MakeClerk</span><span class="token punctuation">(</span>server <span class="token operator">*</span>labrpc<span class="token punctuation">.</span>ClientEnd<span class="token punctuation">)</span> <span class="token operator">*</span>Clerk <span class="token punctuation">{</span>
+	ck <span class="token operator">:=</span> <span class="token function">new</span><span class="token punctuation">(</span>Clerk<span class="token punctuation">)</span>
+	<span class="token operator">*</span>ck <span class="token operator">=</span> Clerk<span class="token punctuation">{</span>
+		server<span class="token punctuation">:</span>       server<span class="token punctuation">,</span>
+		clientId<span class="token punctuation">:</span>     <span class="token function">nrand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+		latestOffset<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+	<span class="token punctuation">}</span>
+	<span class="token keyword">return</span> ck
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>随机数产生算法：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">nrand</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">int64</span> <span class="token punctuation">{</span>
+	max <span class="token operator">:=</span> big<span class="token punctuation">.</span><span class="token function">NewInt</span><span class="token punctuation">(</span><span class="token function">int64</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">&lt;&lt;</span> <span class="token number">62</span><span class="token punctuation">)</span>
+	bigx<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> rand<span class="token punctuation">.</span><span class="token function">Int</span><span class="token punctuation">(</span>rand<span class="token punctuation">.</span>Reader<span class="token punctuation">,</span> max<span class="token punctuation">)</span>
+	x <span class="token operator">:=</span> bigx<span class="token punctuation">.</span><span class="token function">Int64</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token keyword">return</span> x
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>请求操作，失败后重复尝试即可，成功前就不会进行新的请求</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">for</span> <span class="token punctuation">{</span>
+	ok <span class="token operator">:=</span> ck<span class="token punctuation">.</span>server<span class="token punctuation">.</span><span class="token function">Call</span><span class="token punctuation">(</span><span class="token string">"KVServer."</span><span class="token operator">+</span>op<span class="token punctuation">,</span> <span class="token operator">&amp;</span>args<span class="token punctuation">,</span> <span class="token operator">&amp;</span>reply<span class="token punctuation">)</span>
+	<span class="token keyword">if</span> ok <span class="token punctuation">{</span>
+		<span class="token comment">//请求成功后自增序列号</span>
+		ck<span class="token punctuation">.</span>latestOffset<span class="token operator">++</span>
+		<span class="token keyword">break</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h5 id="server端代码实现"><a href="#server端代码实现" class="headerlink" title="server端代码实现"></a><strong>server端代码实现</strong></h5><p>主要是实现处理重传的代码：</p>
+<p>KVServer结构体：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> KVServer <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+	mu        sync<span class="token punctuation">.</span>Mutex
+	nMap      <span class="token builtin">int</span>
+	maps      <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token builtin">string</span>     <span class="token comment">//缓存分片</span>
+	duplicate <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">int64</span><span class="token punctuation">]</span>intStringPair <span class="token comment">//缓存客户端上一次操作</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>KVServer初始化：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>kv <span class="token operator">*</span>KVServer<span class="token punctuation">)</span> <span class="token function">InitServer</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	kv<span class="token punctuation">.</span>nMap <span class="token operator">=</span> <span class="token number">10</span>
+	kv<span class="token punctuation">.</span>maps <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span>
+	<span class="token keyword">for</span> i<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> <span class="token keyword">range</span> kv<span class="token punctuation">.</span>maps <span class="token punctuation">{</span>
+		kv<span class="token punctuation">.</span>maps<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+	kv<span class="token punctuation">.</span>duplicate <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">int64</span><span class="token punctuation">]</span>intStringPair<span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+<p>主要逻辑：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">
+<span class="token keyword">func</span> <span class="token punctuation">(</span>kv <span class="token operator">*</span>KVServer<span class="token punctuation">)</span> <span class="token function">handler</span><span class="token punctuation">(</span>args <span class="token operator">*</span>ApplyArgs<span class="token punctuation">,</span> reply <span class="token operator">*</span>Reply<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	kv<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token keyword">defer</span> kv<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	dupli<span class="token punctuation">,</span> ok <span class="token operator">:=</span> kv<span class="token punctuation">.</span>duplicate<span class="token punctuation">[</span>args<span class="token punctuation">.</span>ClientId<span class="token punctuation">]</span>
+	<span class="token comment">//在map中登记新客户端，这步主要是为了简化逻辑</span>
+	<span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+		dupli<span class="token punctuation">.</span>offset <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
+		dupli<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">""</span>
+	<span class="token punctuation">}</span>
+	<span class="token keyword">if</span> args<span class="token punctuation">.</span>LatestOffset <span class="token operator">==</span> dupli<span class="token punctuation">.</span>offset <span class="token punctuation">{</span> <span class="token comment">//之前丢失的回复，于是直接回复dupli.value</span>
+		reply<span class="token punctuation">.</span>Value <span class="token operator">=</span> dupli<span class="token punctuation">.</span>value
+	<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span> <span class="token comment">//确认dupli中的值已被client接收到,于是直接更新</span>
+		<span class="token keyword">switch</span> args<span class="token punctuation">.</span>OpT <span class="token punctuation">{</span>
+
+		<span class="token keyword">case</span> getT<span class="token punctuation">:</span>
+			reply<span class="token punctuation">.</span>Value <span class="token operator">=</span> kv<span class="token punctuation">.</span><span class="token function">ApplyGet</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>args<span class="token punctuation">.</span>Key<span class="token punctuation">)</span>
+		<span class="token keyword">case</span> putT<span class="token punctuation">:</span>
+			kv<span class="token punctuation">.</span><span class="token function">ApplyPut</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>args<span class="token punctuation">.</span>Key<span class="token punctuation">,</span> <span class="token operator">&amp;</span>args<span class="token punctuation">.</span>Value<span class="token punctuation">)</span>
+		<span class="token keyword">case</span> appendT<span class="token punctuation">:</span>
+			reply<span class="token punctuation">.</span>Value <span class="token operator">=</span> kv<span class="token punctuation">.</span><span class="token function">ApplyAppend</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>args<span class="token punctuation">.</span>Key<span class="token punctuation">,</span> <span class="token operator">&amp;</span>args<span class="token punctuation">.</span>Value<span class="token punctuation">)</span>
+		<span class="token punctuation">}</span>
+		<span class="token comment">//更新offset 更新reply.Value</span>
+		kv<span class="token punctuation">.</span>duplicate<span class="token punctuation">[</span>args<span class="token punctuation">.</span>ClientId<span class="token punctuation">]</span> <span class="token operator">=</span> intStringPair<span class="token punctuation">{</span>offset<span class="token punctuation">:</span> args<span class="token punctuation">.</span>LatestOffset<span class="token punctuation">,</span> value<span class="token punctuation">:</span> reply<span class="token punctuation">.</span>Value<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>需要注意的是golang的map不是线程安全的，需要加锁保护，不过本身为了简化处理逻辑，我也直接给每个函数上了把大锁</p>
+<p>实验结果：</p>
+<p><img src="/6.png"></p>
+
+  </article>
+  <!-- tag -->
+  <div class="mt-12 pt-6 border-t border-gray-200">
+    
+      
+        <span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 m-1 text-sm rounded-md transition-colors hover:bg-gray-200">
+          <a href="/tags/MIT6-5840/">MIT6.5840</a>
+        </span>
+      
+    
+  </div>
+  <!-- prev and next -->
+  <div class="flex justify-between mt-12 pt-6 border-t border-gray-200">
+    <div>
+      
+        <a href="/2024/04/04/mit65840lab3shixian/" class="text-sm text-gray-400 hover:text-gray-500 flex justify-center">
+          <iconify-icon width="20" icon="ri:arrow-left-s-line" data-inline="false"></iconify-icon>
+          MIT6.5840 Lab3 实现
+        </a>
+      
+    </div>
+    <div>
+      
+        <a href="/2024/04/03/mit65840lab1shixian/" class="text-sm text-gray-400 hover:text-gray-500 flex justify-center">
+          MIT6.5840 Lab1 实现
+          <iconify-icon width="20" icon="ri:arrow-right-s-line" data-inline="false"></iconify-icon>
+        </a>
+      
+    </div>
+  </div>
+  <!-- comment -->
+  <div class="article-comments mt-12">
+    
+
+  </div>
+</section>
+<!-- js inspect -->
+
+<script src="/lib/clipboard.min.js"></script>
+
+
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+        preferredFont: "TeX",
+        availableFonts: ["STIX","TeX"],
+        linebreaks: { automatic:true },
+        EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
+    },
+    tex2jax: {
+        inlineMath: [ ["$", "$"], ["\\(","\\)"] ],
+        processEscapes: true,
+        ignoreClass: "tex2jax_ignore|dno",
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        equationNumbers: { autoNumber: "AMS" },
+        noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } },
+        Macros: { href: "{}" }
+    },
+    messageStyle: "none"
+  });
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+  $(document).ready(() => {
+    const maraidConfig = {
+      theme: "default",
+      logLevel: 3,
+      flowchart: { curve: "linear" },
+      gantt: { axisFormat: "%m/%d/%Y" },
+      sequence: { actorMargin: 50 },
+    };
+    mermaid.initialize(maraidConfig);
+  });
+</script>
+
+
+
+<script src="/lib/fancybox/fancybox.umd.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+    $('.post-content').each(function(i){
+      $(this).find('img').each(function(){
+        if ($(this).parent().hasClass('fancybox') || $(this).parent().is('a')) return;
+        var alt = this.alt;
+        if (alt) $(this).after('<span class="fancybox-alt">' + alt + '</span>');
+        $(this).wrap('<a class="fancybox-img" href="' + this.src + '" data-fancybox=\"gallery\" data-caption="' + alt + '"></a>')
+      });
+      $(this).find('.fancybox').each(function(){
+        $(this).attr('rel', 'article' + i);
+      });
+    });
+
+    Fancybox.bind('[data-fancybox="gallery"]', {
+        // options
+    })
+  })
+</script>
+
+<!-- tocbot begin -->
+
+<script src="/lib/tocbot/tocbot.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+      tocbot.init({
+        // Where to render the table of contents.
+        tocSelector: '.post-toc',
+        // Where to grab the headings to build the table of contents.
+        contentSelector: '.post-content',
+        // Which headings to grab inside of the contentSelector element.
+        headingSelector: 'h1, h2, h3',
+        // For headings inside relative or absolute positioned containers within content.
+        hasInnerContainers: true,
+    });
+  })
+</script>
+<!-- tocbot end -->
+
+
+  </main>
+  <footer class="flex flex-col h-40 items-center justify-center text-gray-400 text-sm">
+  <!-- busuanzi -->
+  
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<!-- Busuanzi Analytics -->
+<div class="flex items-center gap-2">
+  <span>Visitors</span>
+  <span id="busuanzi_value_site_uv"></span>
+  <span>Page Views</span>
+  <span id="busuanzi_value_site_pv"></span>
+</div>
+<!-- End Busuanzi Analytics -->
+
+
+  <!-- copyright -->
+  <div class="flex items-center gap-2">
+    <a target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" style="color: inherit;">CC BY-NC-SA 4.0</a>
+    <span>© 2022</span>
+    <iconify-icon width="18" icon="emojione-monotone:maple-leaf" ></iconify-icon>
+    <a href="https://github.com/xbmlz" target="_blank" rel="noopener noreferrer">xbmlz</a>
+  </div>
+  <!-- powered by -->
+  <div class="flex items-center gap-2">
+    <span>Powered by</span>
+    <a href="https://hexo.io/" target="_blank" rel="noopener noreferrer">Hexo</a>
+    <span>&</span>
+    <a href="https://github.com/xbmlz/hexo-theme-maple" target="_blank" rel="noopener noreferrer">Maple</a>
+  </div>
+
+</footer>
+
+  <div class="back-to-top box-border fixed right-6 z-1024 -bottom-20 rounded py-1 px-1 bg-slate-900 opacity-60 text-white cursor-pointer text-center dark:bg-slate-600">
+    <span class="flex justify-center items-center text-sm">
+      <iconify-icon width="18" icon="ion:arrow-up-c" id="go-top"></iconify-icon>
+      <span id="scrollpercent"><span>0</span> %</span>
+    </span>
+  </div>
+  
+<script src="/js/main.js"></script>
+
+
+  <script>
+    $(document).ready(function () {
+      const mapleCount = "10";
+      const speed = "0.5";
+      const mapleEl = document.getElementById("maple");
+      const maples = Array.from({ length: mapleCount }).map(() => {
+        const maple = document.createElement("div");
+        const scale = Math.random() * 0.5 + 0.5;
+        const offset = Math.random() * 2 - 1;
+        const x = Math.random() * mapleEl.clientWidth;
+        const y = -Math.random() * mapleEl.clientHeight;
+        const duration = 10 / speed;
+        const delay = -duration;
+        maple.className = "maple";
+        maple.style.width = `${24 * scale}px`;
+        maple.style.height = `${24 * scale}px`;
+        maple.style.left = `${x}px`;
+        maple.style.top = `${y}px`;
+        maple.style.setProperty("--maple-fall-offset", offset);
+        maple.style.setProperty("--maple-fall-height", `${Math.abs(y) + mapleEl.clientHeight}px`);
+        maple.style.animation = `fall ${duration}s linear infinite`;
+        maple.style.animationDelay = `${delay}s`;
+        mapleEl.appendChild(maple)
+        return maple
+      })
+    });
+  </script>
+  
+
+
+  <div class="fixed top-0 bottom-0 left-0 right-0 pointer-events-none print:hidden" id="maple"></div>
+</body>
+
+</html>

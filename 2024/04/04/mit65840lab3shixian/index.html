@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+
+
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+  <meta name="author" content="Xiur">
+
+
+  <meta name="subtitle" content="闲来记事">
+
+
+  <meta name="description" content="已巷的个人小站">
+
+
+
+<title>MIT6.5840 Lab3 实现 | Oncelane</title>
+
+
+
+<link rel="icon" href="/favicon.png">
+
+
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/nprogress/nprogress.css">
+
+
+
+<script src="/lib/jquery.min.js"></script>
+
+
+<script src="/lib/iconify-icon.min.js"></script>
+
+
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+  };
+</script>
+
+
+<script src="/lib/nprogress/nprogress.js"></script>
+
+<script>
+  $(document).ready(() => {
+    NProgress.configure({
+      showSpinner: false,
+    });
+    NProgress.start();
+    $("#nprogress .bar").css({
+      background: "#de7441",
+    });
+    $("#nprogress .peg").css({
+      "box-shadow": "0 0 2px #de7441, 0 0 4px #de7441",
+    });
+    $("#nprogress .spinner-icon").css({
+      "border-top-color": "#de7441",
+      "border-left-color": "#de7441",
+    });
+    setTimeout(function () {
+      NProgress.done();
+      $(".fade").removeClass("out");
+    }, 800);
+  });
+</script>
+
+<script>
+  (function () {
+    const prefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+    if (setting === "dark" || (prefersDark && setting !== "light"))
+      document.documentElement.classList.toggle("dark", true);
+    let isDark = document.documentElement.classList.contains("dark");
+  })();
+
+  $(document).ready(function () {
+    // init icon
+    const prefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = document.documentElement.classList.contains("dark");
+    $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
+
+    function toggleGiscusTheme() {
+      const isDark = document.documentElement.classList.contains("dark");
+      const giscusFrame = document.querySelector("iframe.giscus-frame");
+      if (giscusFrame) {
+        giscusFrame.contentWindow.postMessage(
+          {
+            giscus: {
+              setConfig: {
+                theme: isDark ? "dark" : "light",
+              },
+            },
+          },
+          "https://giscus.app"
+        );
+      }
+    }
+
+
+    // toggle dark mode
+    function toggleDark() {
+      let isDark = document.documentElement.classList.contains("dark");
+      const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+      isDark = !isDark;
+      document.documentElement.classList.toggle("dark", isDark);
+      $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
+      if (prefersDark === isDark) {
+        localStorage.setItem("hexo-color-scheme", "auto");
+      } else {
+        localStorage.setItem("hexo-color-scheme", isDark ? "dark" : "light");
+      }
+      toggleGiscusTheme();
+    }
+    $("#toggle-dark").click(toggleDark);
+
+    // listen dark mode change
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", (e) => {
+        const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+        if (setting === "auto") {
+          document.documentElement.classList.toggle("dark", e.matches);
+          $("#theme-icon").attr(
+            "icon",
+            e.matches ? "ri:moon-line" : "ri:sun-line"
+          );
+          toggleGiscusTheme();
+        }
+      });
+  });
+</script>
+
+
+
+
+<meta name="generator" content="Hexo 7.0.0">
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+</head>
+<body class="font-sans bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-200 relative">
+  <header class="fixed w-full px-5 py-1 z-10 backdrop-blur-xl backdrop-saturate-150 border-b border-black/5">
+  <div class="max-auto">
+    <nav class="flex items-center text-base">
+      <a href="/" class="group">
+        <h2 class="font-medium tracking-tighterp text-l p-2">
+          <img class="w-5 mr-2 inline-block transition-transform group-hover:rotate-[30deg]" id="logo" src="/images/logo.svg" alt="Oncelane" />
+          Oncelane
+        </h2>
+      </a>
+      <div id="header-title" class="opacity-0 md:ml-2 md:mt-[0.1rem] text-xs font-medium whitespace-nowrap overflow-hidden overflow-ellipsis">
+        MIT6.5840 Lab3 实现
+      </div>
+      <div class="flex-1"></div>
+      <div class="flex items-center gap-3">
+        
+          <a class="hidden sm:flex" href="/archives">Posts</a>
+        
+        
+          
+            <a class="w-5 h-5 hidden sm:flex" title="Github" target="_blank" rel="noopener" href="https://github.com/xbmlz">
+              <iconify-icon width="20" icon="ri:github-line"></iconify-icon>
+            </a>
+          
+        
+        <a class="w-5 h-5 hidden sm:flex" title="Github" href="rss2.xml">
+          <iconify-icon width="20" icon="ri:rss-line"></iconify-icon>
+        </a>
+        <a class="w-5 h-5" title="toggle theme" id="toggle-dark">
+          <iconify-icon width="20" icon="" id="theme-icon"></iconify-icon>
+        </a>
+      </div>
+      <div class="flex items-center justify-center gap-3 ml-3 sm:hidden">
+        <span class="w-5 h-5" aria-hidden="true" role="img" id="open-menu">
+          <iconify-icon width="20" icon="carbon:menu" ></iconify-icon>
+        </span>
+        <span class="w-5 h-5 hidden" aria-hidden="true" role="img" id="close-menu">
+          <iconify-icon  width="20" icon="carbon:close" ></iconify-icon>
+        </span>
+      </div>
+    </nav>
+  </div>
+</header>
+<div id="menu-panel" class="h-0 overflow-hidden sm:hidden fixed left-0 right-0 top-12 bottom-0 z-10">
+  <div id="menu-content" class="relative z-20 bg-white/80 px-6 sm:px-8 py-2 backdrop-blur-xl -translate-y-full transition-transform duration-300">
+    <ul class="nav flex flex-col sm:flex-row text-sm font-medium">
+      
+        <li class="nav-portfolio sm:mx-2 border-b sm:border-0 border-black/5 last:border-0 hover:text-main">
+          <a href="/archives" class="flex h-12 sm:h-auto items-center">Posts</a>
+        </li>
+      
+    </ul>
+  </div>
+  <div class="mask bg-black/20 absolute inset-0"></div>
+</div>
+
+  <main class="pt-14">
+    <!-- css -->
+
+<link rel="stylesheet" href="/lib/fancybox/fancybox.min.css">
+
+
+<link rel="stylesheet" href="/lib/tocbot/tocbot.min.css">
+
+<!-- toc -->
+
+  <!-- tocbot -->
+<nav class="post-toc toc text-sm w-48 relative top-32 right-0 opacity-70 hidden lg:block" style="position: fixed !important;"></nav>
+
+
+<section class="px-6 max-w-prose mx-auto md:px-0">
+  <!-- header -->
+  <header class="overflow-hidden pt-6 pb-6 md:pt-12">
+    <div class="pt-4 md:pt-6">
+      <h1 id="article-title" class="text-[2rem] font-bold leading-snug mb-4 md:mb-6 md:text-[2.6rem]">
+        MIT6.5840 Lab3 实现
+      </h1>
+      <div>
+        <section class="flex items-center gap-3 text-sm">
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="carbon-calendar" ></iconify-icon>
+            <time>2024-04-05</time>
+          </span>
+          <span class="text-gray-400">·</span>
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="ic:round-access-alarm" ></iconify-icon>
+            <span>40 min</span>
+          </span>
+          <span class="text-gray-400">·</span>
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="icon-park-outline:font-search" ></iconify-icon>
+            <span>9.6k words</span>
+          </span>
+          
+        </section>
+      </div>
+    </div>
+  </header>
+  <!-- content -->
+  <article class="post-content prose m-auto slide-enter-content dark:prose-invert">
+    <h1 id="6-5840-Lab-3-Raft"><a href="#6-5840-Lab-3-Raft" class="headerlink" title="6.5840 Lab 3: Raft"></a>6.5840 Lab 3: Raft</h1><p>本节实验的目标是实现Raft分布一致性算法，不必多说，此节为所有实验中最重要的部分，也是最能劝退实验者的一节</p>
+<p>在实验开始前一定要仔细阅读raft论文，编写代码中也要反复确认有没有正确实现论文中的规则</p>
+<p><a target="_blank" rel="noopener" href="https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf">extended Raft paper</a></p>
+<p>论文最重要的图</p>
+<p><img src="/7.png"></p>
+<h3 id="Raft"><a href="#Raft" class="headerlink" title="Raft"></a>Raft</h3><p>raft算法就不在这详细介绍了，直接阅读资料即可</p>
+<p>由于本人一开始没有使用git进行版本管理，因此初次通过A、B、C部分的代码都没有得到保留，只留下了最终通过D部分的代码。</p>
+<p>由于ABCD四个part的实验是增量的关系，后续的测试还会间接地加强测试前面实现的内容，初次通过测试通过的代码段并不一定就是正确的，会在后续的严格测试中暴露出问题。</p>
+<p>所以ABC三部分就不放具体代码了，主要以介绍我在实验中的思路，遇到的坑为主。</p>
+<p>再次强调的是，前期实现的raft算法必须坚固可靠，否则后面回过头来修改会非常的痛苦。建议使用第三方测试脚本并行跑实验测试，至少也要保证能够连续100次通过实验，理想的通过次数应该是千次吧…鉴于本人电脑CPU比较垃圾，也就跑跑百次级别的实验。（在攥写博客期间进行过几次高并行测试，也是直接把虚拟机干崩溃了</p>
+<h3 id="Part-3A-leader-election-moderate"><a href="#Part-3A-leader-election-moderate" class="headerlink" title="Part 3A: leader election (moderate)"></a>Part 3A: leader election (moderate)</h3><p>简介：</p>
+<blockquote>
+<p>Implement Raft <strong>leader election</strong> and <strong>heartbeats</strong> (AppendEntries RPCs with no log entries). The goal for Part 3A is for a single leader to be elected, for the leader to remain the leader if there are no failures, and for a new leader to take over if the old leader fails or if packets to/from the old leader are lost. Run go test -run 3A to test your 3A code.</p>
+</blockquote>
+<p>partA需要实现<strong>领导人选举机制</strong>和<strong>心跳机制</strong></p>
+<p>列举一下实验中比较重要的Hint：</p>
+<blockquote>
+<p>The tester requires that the leader send heartbeat RPCs no more than ten times per second.</p>
+</blockquote>
+<p>这项限制并没有想象中的那么严格，是可以直接让leader发送AE的间隔为90~100ms的，心跳包检测测试只统计最后的总RPC数目</p>
+<blockquote>
+<p>The tester requires your Raft to elect a new leader within five seconds of the failure of the old leader (if a majority of peers can still communicate).</p>
+</blockquote>
+<p>如果当前网络环境是可以产生领导人的（即使网络故障分区了，如果某个分区包含了半数以上的服务器），这是个非常重要的限制，初次实验大多数的错误都可以被这条规则检测出来，同时，在后面的实验中，这条规则也许会成为最难逾越的一道难关</p>
+<blockquote>
+<p>The paper’s Section 5.2 mentions election timeouts in the range of 150 to 300 milliseconds. Such a range only makes sense if the leader sends heartbeats considerably more often than once per 150 milliseconds (e.g., once per 10 milliseconds). Because the tester limits you tens of heartbeats per second, you will have to use an election timeout larger than the paper’s 150 to 300 milliseconds, but not too large, because then you may fail to elect a leader within five seconds.</p>
+</blockquote>
+<p>合理设计Election Timeout Interval，它必须是个随机值，下限应当能够容纳三四次心跳包的正常发送，随机取值范围不能太小，否则选举过程很难成功。太大则影响效率</p>
+<blockquote>
+<p><strong>You’ll need to write code that takes actions periodically or after delays in time. The easiest way to do this is to create a goroutine with a loop that calls time.Sleep(); see the ticker() goroutine that Make() creates for this purpose. Don’t use Go’s time.Timer or time.Ticker, which are difficult to use correctly.</strong></p>
+</blockquote>
+<p>这是相当有价值的忠告，建议用sleep的方式实现超时机制，慎用timer和ticker，它们非常被难以正确使用。</p>
+<p>本人也是尝试过使用timer和ticker重构代码，属于是把脑子榨干了都没搞定。</p>
+<blockquote>
+<p>The tester calls your Raft’s rf.Kill() when it is permanently shutting down an instance. You can check whether Kill() has been called using rf.killed(). You may want to do this in all loops, to avoid having dead Raft instances print confusing messages.</p>
+</blockquote>
+<p>这个是跟测试环境有关的忠告，任何使用了for死循环的地方都要加上!rf.killed()代码提供中止，主要是给测试框架使用的，如果这里没实现好，后面会出现及其玄学且无法排查的bug。具体表现为单个测试能够多次通过，但是连起来测试就疯狂出错…</p>
+<blockquote>
+<p>Go RPC sends only struct fields whose names start with capital letters. Sub-structures must also have capitalized field names (e.g. fields of log records in an array). The labgob package will warn you about this; don’t ignore the warnings.</p>
+</blockquote>
+<p>RPC调用函数和其参数：args和replys结构体中的名字都必须以大写开头，这是go语言的特性，无论是方法名、常量、变量名还是结构体的名称，如果首字母大写，则可以被其他的包访问；如果首字母小写，则只能在本包中使用。可以粗暴的理解为首字母大写是公有的，首字母小写是私有的。</p>
+<blockquote>
+<p>The most challenging part of this lab may be the debugging. Spend some time making your implementation easy to debug. Refer to the Guidance page for debugging tips.</p>
+</blockquote>
+<p><strong>DEBUG！！！</strong><br>打log的时候一定要规范化，不要自己写一大坨文字上字上去，连对齐都做不到，后续我们要面临的log数量是以数十万来计算的，为了保护眼睛，你也可以跟我一样为log加一些亮眼的颜表情，为漫长的debug之旅增添一点点乐趣</p>
+<p>总之debug是非常折磨的，本人实现raft算法也是花了两三百小时，绝对有四五成的时间都枯坐在电脑前反复查看log，修改log的显示，剩下三四成时间是反复用瞪眼法查看自己写的代码，不断在脑海里和raft算法的各种规则进行校验。可以说对raft算法的理解有多深，很大程度上取决于debug的时间有多长</p>
+<hr>
+<p>那么开始正题吧</p>
+<p>PartA需要我们实现leader选举机制，</p>
+<p>简单地说leader要一直发送心跳包，保证follower能够在ElecltionTimeout前能至少收到一次心跳，并重置ElecltionTimeout。</p>
+<p>如果因为网络问题，或者干脆是leader挂掉了，follower直到超时都没有收到心跳，那它可以合法认为leader真的挂了，follower就会转变为candidata开始选举流程，选举出新的leader后重复以上步骤。</p>
+<p>说起来简单，里面的细节可是相当的多，不急，在下面详细介绍</p>
+<p>PartA我们需要实现的点有</p>
+<ol>
+<li>完成server结构体，心跳包结构体的定义</li>
+<li>leader心跳机制</li>
+<li>选举机制</li>
+</ol>
+<h5 id="1-结构体定义"><a href="#1-结构体定义" class="headerlink" title="1.结构体定义"></a>1.结构体定义</h5><p>很多定义的东西我们还暂时用不上，但是提前按照论文说的定义好准没错</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> Raft <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+	mu        sync<span class="token punctuation">.</span>Mutex          <span class="token comment">// Lock to protect shared access to this peer's state</span>
+	peers     <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>labrpc<span class="token punctuation">.</span>ClientEnd <span class="token comment">// RPC end points of all peers</span>
+	persister <span class="token operator">*</span>Persister          <span class="token comment">// Object to hold this peer's persisted state</span>
+	me        <span class="token builtin">int</span>                 <span class="token comment">// this peer's index into peers[]</span>
+	dead      <span class="token builtin">int32</span>               <span class="token comment">// set by Kill()</span>
+
+	<span class="token comment">// Your data here (3A, 3B, 3C).</span>
+	<span class="token comment">// Look at the paper's Figure 2 for a description of what</span>
+	<span class="token comment">// state a Raft server must maintain.</span>
+
+	<span class="token comment">//peer state</span>
+	state <span class="token builtin">int32</span>
+
+	<span class="token comment">//persister 持久性</span>
+	currentTerm      <span class="token builtin">int</span>
+	votedFor         <span class="token builtin">int</span>
+	log              <span class="token punctuation">[</span><span class="token punctuation">]</span>LogType
+	lastIncludeIndex <span class="token builtin">int</span>
+	lastIncludeTerm  <span class="token builtin">int</span>
+
+	<span class="token comment">//volatility 易失性</span>
+	commitIndex <span class="token builtin">int</span>
+	lastApplied <span class="token builtin">int</span>
+
+	<span class="token comment">//leader volatility</span>
+	nextIndex  <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span>
+	matchIndex <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span>
+
+	<span class="token comment">//AppendEntris info</span>
+	lastHearBeatTime      time<span class="token punctuation">.</span>Time
+	lastSendHeartbeatTime time<span class="token punctuation">.</span>Time
+
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
+<p>心跳包结构的定义</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> AppendEntriesArgs <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+	Term         <span class="token builtin">int</span> 		<span class="token comment">//leader任期</span>
+	LeaderId     <span class="token builtin">int</span>		<span class="token comment">//leaderId</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> AppendEntriesReply <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+	Term          <span class="token builtin">int</span>  <span class="token comment">//接收者任期</span>
+	Success       <span class="token builtin">bool</span> <span class="token comment">//是否接受了心跳包的附带日志</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h5 id="2-选举机制"><a href="#2-选举机制" class="headerlink" title="2.选举机制"></a>2.<strong>选举机制</strong></h5><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> RequestVoteArgs <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+	<span class="token comment">// Your data here (3A, 3B).</span>
+	Term         <span class="token builtin">int</span>
+	CandidateId  <span class="token builtin">int</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> RequestVoteReply <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+	<span class="token comment">// Your data here (3A).</span>
+	Term        <span class="token builtin">int</span>
+	VoteGranted <span class="token builtin">bool</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>在一个大循环中进行流程，每循环一次sleep 10ms</p>
+<ol>
+<li>检查状态，已经是leader了，continue下一次循环</li>
+<li>检查超时时间timeCount := time.Since(rf.lastHearBeatTime).Milliseconds()<ol>
+<li>没有超时，进入下一次循环</li>
+<li>超时，继续往下走</li>
+</ol>
+</li>
+<li>检查自己的状态，如果是follower，状态改为candidate，继续往下走</li>
+<li>检查自己的状态，若果是candidate，更新计时器，自增任期，给自己投票，继续往下走</li>
+<li>发送投票请求，阻塞统计投票结果<ol>
+<li>还没统计完毕就超时了，解除阻塞，继续往下走</li>
+<li>超时前拿到了结果，往下走</li>
+</ol>
+</li>
+<li><strong>检查自己的状态还是不是candidate</strong>，如果不是了，continue进入下一次循环，如果还是candidate，继续往下走</li>
+<li>查看投票结果，<ol>
+<li>得到半数及以上投票（加上自己给自己头的一票就超半数了）则转变状态为leader，进入下一次循环</li>
+<li>选举失败，不做操作，进入下一次循环</li>
+</ol>
+</li>
+</ol>
+<p>为什么需要在第6步检查自己是不是candidate？因为所有RPC的发送和响应都带有Term信息，接收方都需要对Term的值进行判断，如果投票RPC请求的响应的Term比自己大，需要将自己的状态转变为follower，更新自己的任期，清空voteFor。</p>
+<p>如果状态转变为follower，其他所有流程（candidate选举流程，leader发送心跳）都要立刻中断，这就是使用大循环的好处，可以随时使用continue中断当前流程。如果使用各种函数嵌套实现流程，会导致消息传递很复杂，极其容易出错。</p>
+<p>本人就因为这一点吃过苦</p>
+<h4 id="3-心跳机制"><a href="#3-心跳机制" class="headerlink" title="3.心跳机制"></a>3.心跳机制</h4><p>leader当选后定时发送心跳包给其他follower或candidate</p>
+<p>由于lab1只需要实现无日志的领导人选举，所以心跳包的参数只需要有Term和LeaderId就够了</p>
+<p>主要思路是使用for大循环，检测自己是否为leader，是则进行心跳包发送判断</p>
+<p>检查上次发送心跳包的时间距离当前时间的值，如果超过了规定的心跳包发送间隔就进行一次心跳包的发送</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>rf <span class="token operator">*</span>Raft<span class="token punctuation">)</span> <span class="token function">appendEntriesLoop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">for</span> <span class="token operator">!</span>rf<span class="token punctuation">.</span><span class="token function">killed</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">10</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Millisecond<span class="token punctuation">)</span>
+		<span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+			rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+			<span class="token keyword">defer</span> rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+			<span class="token keyword">if</span> rf<span class="token punctuation">.</span>state <span class="token operator">!=</span> leader <span class="token punctuation">{</span>
+				<span class="token keyword">return</span>
+			<span class="token punctuation">}</span>
+			countTime <span class="token operator">:=</span> time<span class="token punctuation">.</span><span class="token function">Since</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>lastSendHeartbeatTime<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Milliseconds</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+			<span class="token keyword">if</span> countTime <span class="token operator">&lt;</span> HeartBeatInterval <span class="token punctuation">{</span>
+				<span class="token keyword">return</span>
+			<span class="token punctuation">}</span>
+			rf<span class="token punctuation">.</span>lastSendHeartbeatTime <span class="token operator">=</span> time<span class="token punctuation">.</span><span class="token function">Now</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+			<span class="token comment">//发送心跳</span>
+			rf<span class="token punctuation">.</span><span class="token function">SendAppendEntriesToAll</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+		<span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>从leader的角度来看，心跳包有这五种响应类型，注意这并不是需要写在心跳包的参数，只是为了debug方便被我定义出来的</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">const</span> <span class="token punctuation">(</span>
+	AEresult_Accept      <span class="token operator">=</span> <span class="token boolean">iota</span> <span class="token comment">//接受日志</span>
+	AEresult_Reject             <span class="token comment">//不接受日志</span>
+	AEresult_StopSending        <span class="token comment">//我任期比你大！</span>
+	AEresult_Ignore             <span class="token comment">//上个任期或更久前发送的心跳的响应</span>
+	AEresult_Lost               <span class="token comment">//超时，对方没收到心跳包/己方没收到响应</span>
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>由于lab1都是无日志的空心跳包，所以不会出现AEresult_Reject，但其它情况都有可能</p>
+<p>leader收到的心跳包响应后需要立刻确认包返回参数中的Term，如果Term比自己的任期大，</p>
+<ol>
+<li>需要立刻停止剩余心跳的发送，将自己的状态更改为follower</li>
+<li>更新自己的term</li>
+<li><strong>不要</strong>重置定时器</li>
+</ol>
+<p>这里介绍一下如何实现ElectionTimeout定时器，思路很简单，对于follower和candidate，仍然是一个大循环不停检测当前时间和上次收到心跳的时间lastHearBeatTime的差值，如果距离上次收到心跳包的时间没超过设定的随机值，睡一小会（10ms）然后重复检测，如果超过了，就可以在循环里往下走流程（初次选举流程，选举超时流程，选举失败流程）</p>
+<p>那么所谓的重置定时器就只是更新lastHearBeatTime为当前时间而已，这里有两个重置概念不要混淆：</p>
+<ol>
+<li>follower超时/candiata选举超时，超时到达后重置一个新的时间间隔，比如原本的ElectionTimeout时间长度为359ms，下一次就随机一个新的ElectionTimeout时间，比如524ms</li>
+<li>follower/candidate收到一个合法（任期大于等于自己的任期）leader的心跳，重置<strong>lastHearbeatTime</strong>为收到leader心跳的时间，当然细读论文后，还有两个没有收到心跳却要重置定时器的时机，分别是：<ol>
+<li>follower因为超时，成为candidate的时候， </li>
+<li>follower收到选票请求并且<strong>投出赞同票</strong>时。</li>
+</ol>
+</li>
+</ol>
+<p>   只有这三种情况可以更新lastHearBeatTime，（当然话不能说太绝，后面加入快照机制的时候，follower收到快照后同样可以重置</p>
+<p>今后本文所说的重置定时器均是指的第二种情况：更新lastHeartbeatTIme</p>
+<p><strong>心跳包接收者的严格按顺序流程：</strong></p>
+<ol>
+<li>心跳包的任期比自己小，直接忽视，当然返回值还是要带上自己的任期，以便任期落后的leader更新自己的状态。中止流程，下面操作都不做，直接返回</li>
+<li>心跳包的任期大于自己的任期，把自己的任期更新到心跳包的任期，清空votefor，如果自己的状态是candidate，退化为follower，继续往下走</li>
+<li>心跳包的任期等于自己的任期，如果自己的状态是candidate，退化为follower，清空votefor，继续往下走</li>
+<li>更新定时器，更新leaderId为心跳包的leaderid，返回success和自己的term</li>
+</ol>
+<p>无日志情况下的心跳机制就这些</p>
+<p>实现好两这个流程，PartA基本就能通过了</p>
+<p>初次实验可能会出现测试通过了，但测试却警告：“在没有网络崩溃的情况下发生了选举”</p>
+<p>这说明一定有哪个流程没有被正确实现，比较常见的错误是收到心跳的时候没有正确更新定时器</p>
+<hr>
+<h3 id="Part-3B-log-hard"><a href="#Part-3B-log-hard" class="headerlink" title="Part 3B: log (hard)"></a>Part 3B: log (hard)</h3><p>在这一节开始关于锁的使用就需要重视了，不停使用大锁把每个函数锁起来确实可以很大一部分并发带来的问题，但是效率也是低下的，最好在考虑并发安全的同时尽可能缩小锁的范围。</p>
+<p>照例看Hint</p>
+<blockquote>
+<p>You will need to implement the election restriction (section 5.4.1 in the paper).</p>
+</blockquote>
+<p><img src="/"></p>
+<p>简单翻译，candidate的日志如果不比自己（follower）的日志新，那就拒绝投票</p>
+<p>如何定义新？比较两者的最后一条日志的term，term更大的就是更新，如果term一样，比较最后一条日志的index，谁的index更大谁就新</p>
+<p>所以follower比candidate新,follower就不会投赞成票，如果candidate更新，或者两者同样新，就可以赞同投票</p>
+<p>为了实现比较term和index，增加vote结构体成员 LastLogIndex和LastLogTerm，如果一开始大家都没有日志，那就设置为某个默认值，我是设成-1</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> RequestVoteArgs <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+	<span class="token comment">// Your data here (3A, 3B).</span>
+	Term         <span class="token builtin">int</span>
+	CandidateId  <span class="token builtin">int</span>
+	LastLogIndex <span class="token builtin">int</span>
+	LastLogTerm  <span class="token builtin">int</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>follower处理投票的具体实现代码：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">if</span> rf<span class="token punctuation">.</span>votedFor <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token operator">||</span> rf<span class="token punctuation">.</span>votedFor <span class="token operator">==</span> args<span class="token punctuation">.</span>CandidateId <span class="token punctuation">{</span>
+	lastLogTerm <span class="token operator">:=</span> rf<span class="token punctuation">.</span><span class="token function">lastTerm</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token keyword">if</span> args<span class="token punctuation">.</span>LastLogTerm <span class="token operator">&gt;</span> lastLogTerm <span class="token operator">||</span> <span class="token punctuation">(</span>args<span class="token punctuation">.</span>LastLogTerm <span class="token operator">==</span> lastLogTerm <span class="token operator">&amp;&amp;</span> args<span class="token punctuation">.</span>LastLogIndex <span class="token operator">&gt;=</span> rf<span class="token punctuation">.</span><span class="token function">lastIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		rf<span class="token punctuation">.</span>votedFor <span class="token operator">=</span> args<span class="token punctuation">.</span>CandidateId
+		reply<span class="token punctuation">.</span>VoteGranted <span class="token operator">=</span> <span class="token boolean">true</span>
+		rf<span class="token punctuation">.</span>lastHearBeatTime <span class="token operator">=</span> time<span class="token punctuation">.</span><span class="token function">Now</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+		<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"🎫Rec Term[%d] [%d] -&gt; [%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> args<span class="token punctuation">.</span>CandidateId<span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>注意细节</p>
+<p>1：rf.votedFor == -1的判断，一个任期内，follower只能投一张赞成票，这保证了一个任期内只会合法产生一个leader。</p>
+<p>2：rf.votedFor == args.CandidateId 这个判断是我在debug之旅做出的尝试，逻辑上并没有问题，follower发出的赞成票可能因为网络丢包导致candidate没收到这张票，那么follower再次收到同一个candidate的投票请求时，既然已经投给它了那么再投一次也无妨。但实际上candidate在一个任期内只会向一个服务器发送一次投票RPC，何来重复一说…但既然留着没问题，我也不删了</p>
+<h4 id="日志复制"><a href="#日志复制" class="headerlink" title="日志复制"></a>日志复制</h4><p>修改心跳包相关代码</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> AppendEntriesArgs <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+	Term         <span class="token builtin">int</span> <span class="token comment">//leader任期</span>
+	LeaderId     <span class="token builtin">int</span> <span class="token comment">//leaderId</span>
+	PrevLogIndex <span class="token builtin">int</span>
+	PrevLogTerm  <span class="token builtin">int</span>
+	Entries      <span class="token punctuation">[</span><span class="token punctuation">]</span>LogType
+	LeaderCommit <span class="token builtin">int</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> AppendEntriesReply <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+	Term          <span class="token builtin">int</span>  <span class="token comment">//接收者任期</span>
+	Success       <span class="token builtin">bool</span> <span class="token comment">//是否接受心跳包</span>
+	ConflictIndex <span class="token builtin">int</span>
+	ConflictTerm  <span class="token builtin">int</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>ConflictIndex ConflictTerm：这两个参数论文上没有，这是用于加快leader传输日志的回退速度所需要使用的参数，暂时按下不表</p>
+<p>既然要实现日志复制，那首先得有日志。</p>
+<p>测试框架通过Start()函数，为当前leader新增日志，</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">
+<span class="token keyword">func</span> <span class="token punctuation">(</span>rf <span class="token operator">*</span>Raft<span class="token punctuation">)</span> <span class="token function">Start</span><span class="token punctuation">(</span>command <span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">int</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">,</span> <span class="token builtin">bool</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token keyword">defer</span> rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	index <span class="token operator">:=</span> rf<span class="token punctuation">.</span><span class="token function">lastIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">2</span>
+	term <span class="token operator">:=</span> rf<span class="token punctuation">.</span>currentTerm
+	isLeader <span class="token operator">:=</span> rf<span class="token punctuation">.</span>state <span class="token operator">==</span> leader
+
+	<span class="token comment">// Your code here (3B).</span>
+	<span class="token keyword">if</span> <span class="token operator">!</span>isLeader <span class="token punctuation">{</span>
+		<span class="token keyword">return</span> index<span class="token punctuation">,</span> term<span class="token punctuation">,</span> isLeader
+	<span class="token punctuation">}</span>
+
+	<span class="token comment">//添加条目到本地</span>
+	rf<span class="token punctuation">.</span>log <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>log<span class="token punctuation">,</span> LogType<span class="token punctuation">{</span>
+		Term<span class="token punctuation">:</span>  rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span>
+		Value<span class="token punctuation">:</span> command<span class="token punctuation">,</span>
+	<span class="token punctuation">}</span><span class="token punctuation">)</span>
+	rf<span class="token punctuation">.</span><span class="token function">persist</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"CLIENT📨 Term[%d] [%d] Receive [%v] logIndex[%d](leader action)\n"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> command<span class="token punctuation">,</span> index<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+	<span class="token keyword">return</span> index<span class="token punctuation">,</span> term<span class="token punctuation">,</span> isLeader
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>如果是非leader被调用了Start()，返回false即可，我向测试框架返回的index为rf.lastIndex() + 2，这是因为官方的认为第一条log的index为1，我这里并没有在log中实现哨兵位，所以第一条log的index是从0开始的，所以增加一条log之后index的值还得+1，才是测试程序希望得到的返回值。</p>
+<p>追加完新日志条目后可以选择直接用一个协程来发送AppendEntries RPC同步日志，可以等leader下一次心跳周期到达，再自动发送。</p>
+<blockquote>
+<p>我一开始并没有太在意这个地方，没想到在lab4一个比较严格的测试中背刺到了，那个测试总共发送向leader发送1000日志，而且只有前一条日志被确认复制到了大多数服务器上之后，才发送下一条日志，最后统计出来100ms/op &gt; 33.3ms/op Fail Test</p>
+</blockquote>
+<p>leader有了新日志之后就可以开始日志复制流程了，日志复制的部分放在心跳包的发送流程中，这里用到了两个数组来确定leader需要发送哪些日志，</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">nextIndex  <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span>
+matchIndex <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p><strong>nextIndex数组</strong></p>
+<p>nextIndex数组的意义非常明确，leader每次向id为i的follower发送的心跳包中，需要附加nextIndex[i]到最新日志条目的所有日志</p>
+<p>每次leader当选后都要重置nextIndex数组，让其所有元素的值指向leader当前最新日志的下一位，也就是说指向了一个空位置</p>
+<p>所以新leader当选后发送的第一条AE大多数情况下都是空日志</p>
+<p>leader当选后还要重置matchIndex数组的值为0，当然还是因为我的log没有设置哨兵位，所以我设置成-1</p>
+<p><strong>matchIndex数组</strong></p>
+<p>matchIndex数组的意义是表示：leader确认过的，follower【i】与自己日志保持一致的最新Index，具体如何更新它的值后面会说明</p>
+<p>matchIndex数组的作用只是为了给commitIndex的更新做参考</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">if</span> voteCount <span class="token operator">&gt;</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>peers<span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">2</span> <span class="token punctuation">{</span>
+	rf<span class="token punctuation">.</span>IisBack <span class="token operator">=</span> <span class="token boolean">false</span>
+	rf<span class="token punctuation">.</span>state <span class="token operator">=</span> leader
+	rf<span class="token punctuation">.</span>leaderId <span class="token operator">=</span> rf<span class="token punctuation">.</span>me
+	rf<span class="token punctuation">.</span>nextIndex <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>peers<span class="token punctuation">)</span><span class="token punctuation">)</span>
+	<span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>peers<span class="token punctuation">)</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">{</span>
+		rf<span class="token punctuation">.</span>nextIndex<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> rf<span class="token punctuation">.</span><span class="token function">lastIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">1</span>
+	<span class="token punctuation">}</span>
+	rf<span class="token punctuation">.</span>matchIndex <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>peers<span class="token punctuation">)</span><span class="token punctuation">)</span>
+	<span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>peers<span class="token punctuation">)</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">{</span>
+		rf<span class="token punctuation">.</span>matchIndex<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
+	<span class="token punctuation">}</span>
+	<span class="token comment">//这条log与其他log相比打印在屏幕上会有很明显的错位效果，比较重要的log可以故意不遵守格式，方便第一眼找到，当然后面实验数十万条log，ide自己都不愿意打开的超大日志文件再怎么显眼都没卵用。只能是设置好关键词，善用搜索功能了</span>
+	<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"❗ Term[%d] [%d] candidate -&gt; leader"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">)</span>
+	rf<span class="token punctuation">.</span>lastSendHeartbeatTime <span class="token operator">=</span> time<span class="token punctuation">.</span><span class="token function">Now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Add</span><span class="token punctuation">(</span><span class="token operator">-</span>time<span class="token punctuation">.</span>Millisecond <span class="token operator">*</span> <span class="token number">2</span> <span class="token operator">*</span> HeartBeatInterval<span class="token punctuation">)</span>
+	<span class="token keyword">return</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>然后leader就可以开始根据nextIndex的值发送日志了</p>
+<p><strong>leader日志发送</strong></p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token operator">*</span>args <span class="token operator">=</span> AppendEntriesArgs<span class="token punctuation">{</span>
+	Term<span class="token punctuation">:</span>         rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span>
+	LeaderId<span class="token punctuation">:</span>     rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span>
+	PrevLogIndex<span class="token punctuation">:</span> rf<span class="token punctuation">.</span>nextIndex<span class="token punctuation">[</span>server<span class="token punctuation">]</span> <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">,</span>
+	PrevLogTerm<span class="token punctuation">:</span>  <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span>
+	Entries<span class="token punctuation">:</span>      <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span>LogType<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+	LeaderCommit<span class="token punctuation">:</span> rf<span class="token punctuation">.</span>commitIndex<span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">if</span> rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>args<span class="token punctuation">.</span>PrevLogIndex<span class="token punctuation">)</span> <span class="token operator">&gt;=</span> 	<span class="token number">0</span> <span class="token operator">&amp;&amp;</span> rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>args<span class="token punctuation">.</span>PrevLogIndex<span class="token punctuation">)</span> <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>log<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">//有PrevIndex</span>
+	args<span class="token punctuation">.</span>PrevLogTerm <span class="token operator">=</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>args<span class="token punctuation">.</span>PrevLogIndex<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">.</span>Term
+<span class="token punctuation">}</span>
+<span class="token keyword">if</span> rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>nextIndex<span class="token punctuation">[</span>server<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">&gt;=</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>nextIndex<span class="token punctuation">[</span>server<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>log<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">//有nextIndex</span>
+	args<span class="token punctuation">.</span>Entries <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>args<span class="token punctuation">.</span>Entries<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>nextIndex<span class="token punctuation">[</span>server<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token operator">...</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>leader将下标为nextIndex到最新下标的所有日志放到心跳包里发给对应的服务器</p>
+<p>args中的PreLogIndex和PreLogTerm是leader要发给该serve的日志段的前一个日志条目，follower需要根据这两个参数的值判断自己的日志有没有跟leader匹配上，没匹配上的话是不能复制这份心跳里的日志的</p>
+<p>leader发送完心跳RPC后处理回参的部分放在下文</p>
+<p>LeaderCommit用来更新follower的commitIndex</p>
+<p>回顾matchIndex的作用，</p>
+<p>leader的commitIndex由matchIndex决定，</p>
+<p>follower的commitInedx由leader心跳的LeaderCommit（commitIndex）决定，</p>
+<p>matchIndex的值根据follower的心跳回参决定，如果follower匹配上了日志，那么leader就可以更新matchIndex的值为发送心跳时的最新日志条目的index</p>
+<p>为什么要这么弯弯绕绕的更新commitIndex的值呢。这是保证日志在大多数服务器上保持一致的关键。</p>
+<p>leader可以只在一次心跳周期内更新自己的commitIndex的值，这是因为leader拥有跟大多数follower通信的特权，它确实知道commitIndex在多数服务器上达成共识了所以leader可以更新。</p>
+<p>其他服务器则至少需要经过<strong>两次心跳周期</strong>才能更新自己的commitIndex到leader水平，因为follower依赖于leader的判断。 </p>
+<p>这有点类似于TCP三次握手，只有三次握手，才能使双方达成共识，少一次都无法确认。</p>
+<p><strong>follower日志复制</strong></p>
+<p>follower也不是收到日志就万事大吉的，需要经过额外判断确认能否接受日志</p>
+<p>那就是判断PrevLogIndex和PrevLogTerm和自己的日志是否匹配上了</p>
+<p>没匹配上就丢弃本次接收到的日志，回复leader额外信息指导leader下次该发送哪些日志。</p>
+<p>匹配上了，就可以将心跳附加日志中自己没有的那一部分追加到自己log中</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">
+<span class="token keyword">if</span> rf<span class="token punctuation">.</span><span class="token function">lastIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> args<span class="token punctuation">.</span>PrevLogIndex <span class="token punctuation">{</span>
+	reply<span class="token punctuation">.</span>ConflictIndex <span class="token operator">=</span> rf<span class="token punctuation">.</span><span class="token function">lastIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"💔Rec Term[%d] [%d] Reject:PreLogIndex[%d] Out of Len -&gt;[%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> args<span class="token punctuation">.</span>PrevLogIndex<span class="token punctuation">,</span> rf<span class="token punctuation">.</span><span class="token function">lastIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+	<span class="token keyword">return</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">if</span> args<span class="token punctuation">.</span>PrevLogIndex <span class="token operator">&gt;=</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>args<span class="token punctuation">.</span>PrevLogIndex<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">.</span>Term <span class="token operator">!=</span> args<span class="token punctuation">.</span>PrevLogTerm <span class="token punctuation">{</span>
+	reply<span class="token punctuation">.</span>ConflictTerm <span class="token operator">=</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>args<span class="token punctuation">.</span>PrevLogIndex<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">.</span>Term
+	<span class="token keyword">for</span> index <span class="token operator">:=</span> rf<span class="token punctuation">.</span>lastIncludeIndex <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span> index <span class="token operator">&lt;=</span> args<span class="token punctuation">.</span>PrevLogIndex<span class="token punctuation">;</span> index<span class="token operator">++</span> <span class="token punctuation">{</span> <span class="token comment">// 找到冲突term的首次出现位置，最差就是PrevLogIndex</span>
+		<span class="token keyword">if</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>args<span class="token punctuation">.</span>PrevLogIndex<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">.</span>Term <span class="token operator">==</span> reply<span class="token punctuation">.</span>ConflictTerm <span class="token punctuation">{</span>
+			reply<span class="token punctuation">.</span>ConflictIndex <span class="token operator">=</span> index
+			<span class="token keyword">break</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span>
+	<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"💔Rev Term[%d] [%d] Reject :PreLogTerm Not Match [%d] != [%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>args<span class="token punctuation">.</span>PrevLogIndex<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">.</span>Term<span class="token punctuation">,</span> args<span class="token punctuation">.</span>PrevLogTerm<span class="token punctuation">)</span>
+	<span class="token keyword">return</span>
+<span class="token punctuation">}</span>
+rf<span class="token punctuation">.</span><span class="token function">CopyEntries</span><span class="token punctuation">(</span>args<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>日志复制</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>rf <span class="token operator">*</span>Raft<span class="token punctuation">)</span> <span class="token function">CopyEntries</span><span class="token punctuation">(</span>args <span class="token operator">*</span>AppendEntriesArgs<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	logchange <span class="token operator">:=</span> <span class="token boolean">false</span>
+	<span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>args<span class="token punctuation">.</span>Entries<span class="token punctuation">)</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">{</span>
+		rfIndex <span class="token operator">:=</span> i <span class="token operator">+</span> args<span class="token punctuation">.</span>PrevLogIndex <span class="token operator">+</span> <span class="token number">1</span>
+		logPos <span class="token operator">:=</span> rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>rfIndex<span class="token punctuation">)</span>
+		<span class="token keyword">if</span> rfIndex <span class="token operator">&gt;</span> rf<span class="token punctuation">.</span><span class="token function">lastIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">//超出原本log长度了</span>
+			rf<span class="token punctuation">.</span>log <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>log<span class="token punctuation">,</span> args<span class="token punctuation">.</span>Entries<span class="token punctuation">[</span>i<span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token operator">...</span><span class="token punctuation">)</span>
+			rf<span class="token punctuation">.</span><span class="token function">persist</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+			logchange <span class="token operator">=</span> <span class="token boolean">true</span>
+			<span class="token keyword">break</span>
+		<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>logPos<span class="token punctuation">]</span><span class="token punctuation">.</span>Term <span class="token operator">!=</span> args<span class="token punctuation">.</span>Entries<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>Term <span class="token punctuation">{</span> <span class="token comment">//有脏东西</span>
+			rf<span class="token punctuation">.</span>log <span class="token operator">=</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span><span class="token punctuation">:</span>logPos<span class="token punctuation">]</span> <span class="token comment">//删除脏数据</span>
+			<span class="token comment">//一口气复制完</span>
+			rf<span class="token punctuation">.</span>log <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>log<span class="token punctuation">,</span> args<span class="token punctuation">.</span>Entries<span class="token punctuation">[</span>i<span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token operator">...</span><span class="token punctuation">)</span>
+			rf<span class="token punctuation">.</span><span class="token function">persist</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+			logchange <span class="token operator">=</span> <span class="token boolean">true</span>
+			<span class="token keyword">break</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span>
+	<span class="token comment">//用于debug</span>
+	<span class="token keyword">if</span> logchange <span class="token punctuation">{</span>
+		<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"💖Rev Term[%d] [%d] Copy: Len -&gt; [%d] "</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>log<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+		<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"Term[%d] [%d] after copy:"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">)</span>
+		i <span class="token operator">:=</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>log<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">10</span>
+		<span class="token keyword">if</span> i <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+			i <span class="token operator">=</span> <span class="token number">0</span>
+		<span class="token punctuation">}</span>
+		<span class="token keyword">for</span> <span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>log<span class="token punctuation">)</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">{</span>
+			<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"Term[%d] [%d] index[%d] log[%v]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> i<span class="token operator">+</span>rf<span class="token punctuation">.</span>lastIncludeIndex<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>Value<span class="token punctuation">)</span>
+		<span class="token punctuation">}</span>
+
+	<span class="token punctuation">}</span>
+	<span class="token keyword">var</span> min <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
+	<span class="token keyword">if</span> args<span class="token punctuation">.</span>LeaderCommit <span class="token operator">&gt;</span> rf<span class="token punctuation">.</span><span class="token function">lastIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		min <span class="token operator">=</span> rf<span class="token punctuation">.</span><span class="token function">lastIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+		min <span class="token operator">=</span> args<span class="token punctuation">.</span>LeaderCommit
+	<span class="token punctuation">}</span>
+	<span class="token keyword">if</span> rf<span class="token punctuation">.</span>commitIndex <span class="token operator">&lt;</span> min <span class="token punctuation">{</span>
+		<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"COMIT Term[%d] [%d] CommitIndex: [%d] -&gt; [%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>commitIndex<span class="token punctuation">,</span> min<span class="token punctuation">)</span>
+		rf<span class="token punctuation">.</span>commitIndex <span class="token operator">=</span> min
+	<span class="token punctuation">}</span>
+
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这里使用了ConflictIndex和ConflictTerm的快速回退优化。</p>
+<p>论文并没有实现快速回退，论文对于心跳日志被拒绝的处理为：leader收到日志复制失败的响应后，将对应的nextIndex[i] -= 1即可，下一次心跳周期leader往回多发一个log（当然新的log也不会落下，一起发，只是还需要往前多发一个旧的日志），看看这次还不匹配的话，那就慢慢来着吧，一直回退到匹配为止。这就是日志回退现象：出现于leader和follower之间日志差异较大的时候，为了同步，leader需要多发一些日志</p>
+<p>论文也说，这种操作看似效率低下，但发生情况很少，在现实中谁家的网络服务会差到丢包率30%，网络延迟达到2000ms，服务器反复宕机仰卧起坐，脑裂如同家常便饭呢，还要继续坚持提供可靠同步服务呢？但是在测试环境下，如果不日志快速回退的优化，极大概率会在某个Test挂掉</p>
+<p>所以我们需要自己实现日志快速回退机制，好在实验官方指导中给了解决办法</p>
+<blockquote>
+<p>how to roll back quickly  the Figure 2 design backs up one entry per RPC – slow!  </p>
+<p>lab tester may require faster roll-back  </p>
+<p>paper outlines a scheme towards end of Section 5.3    no details; </p>
+<p>here’s my guess; </p>
+<p>better schemes are possible </p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Case 1</th>
+<th>Case 2</th>
+<th>Case 2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>S1</td>
+<td>4 5 5</td>
+<td>4 4 4</td>
+<td>4</td>
+</tr>
+<tr>
+<td>S2</td>
+<td>4 6 6 6</td>
+<td>4 6 6 6</td>
+<td>4 6 6 6</td>
+</tr>
+</tbody></table>
+<p>is leader for term 6, S1 comes back to life, S2 sends AE for last 6    AE has prevLogTerm=6  rejection from S1 includes:</p>
+<p>XTerm:  term in the conflicting entry (if any)    </p>
+<p>XIndex: index of first entry with that term (if any)    </p>
+<p>XLen:   log length  </p>
+<p>Case 1 (leader doesn’t have XTerm):    nextIndex = XIndex  </p>
+<p>Case 2 (leader has XTerm):   nextIndex = leader’s last entry for XTerm  </p>
+<p>Case 3 (follower’s log is too short):    nextIndex = XLen</p>
+</blockquote>
+<p>助教还提供了一个改进版，也就是我所使用的版本</p>
+<blockquote>
+<p>If a follower does not have prevLogIndex in its log, it should return with conflictIndex = len(log) and conflictTerm = None.</p>
+<p>If a follower does have prevLogIndex in its log, but the term does not match, it should return conflictTerm = log[prevLogIndex].Term, and then search its log for the first index whose entry has term equal to conflictTerm.</p>
+<p>Upon receiving a conflict response, the leader should first search its log for conflictTerm. If it finds an entry in its log with that term, it should set nextIndex to be the one beyond the index of the last entry in that term in its log.</p>
+<p>If it does not find an entry with that term, it should set nextIndex = conflictIndex.</p>
+</blockquote>
+<p>日志快速回退的代码实现</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">ok <span class="token operator">:=</span> rf<span class="token punctuation">.</span>peers<span class="token punctuation">[</span>server<span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">Call</span><span class="token punctuation">(</span><span class="token string">"Raft.AppendEntries"</span><span class="token punctuation">,</span> args<span class="token punctuation">,</span> reply<span class="token punctuation">)</span>
+
+rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">defer</span> rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">if</span> ok <span class="token punctuation">{</span>
+	<span class="token keyword">if</span> args<span class="token punctuation">.</span>Term <span class="token operator">!=</span> rf<span class="token punctuation">.</span>currentTerm <span class="token punctuation">{</span>
+		<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"💔Rec Term[%d] [%d] Receive Send.Term[%d][too OLD]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> args<span class="token punctuation">.</span>Term<span class="token punctuation">)</span>
+		<span class="token keyword">return</span>
+	<span class="token punctuation">}</span>
+	<span class="token keyword">if</span> rf<span class="token punctuation">.</span>currentTerm <span class="token operator">&lt;</span> reply<span class="token punctuation">.</span>Term <span class="token punctuation">{</span>
+		rf<span class="token punctuation">.</span>votedFor <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
+		rf<span class="token punctuation">.</span>state <span class="token operator">=</span> follower
+		rf<span class="token punctuation">.</span>currentTerm <span class="token operator">=</span> reply<span class="token punctuation">.</span>Term
+		rf<span class="token punctuation">.</span>leaderId <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
+		rf<span class="token punctuation">.</span><span class="token function">persist</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+		<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"💔Rec Term[%d] [%d] Receive Discover newer Term[%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> reply<span class="token punctuation">.</span>Term<span class="token punctuation">)</span>
+		<span class="token keyword">return</span>
+	<span class="token punctuation">}</span>
+	<span class="token keyword">if</span> reply<span class="token punctuation">.</span>Success <span class="token punctuation">{</span>
+		rf<span class="token punctuation">.</span>nextIndex<span class="token punctuation">[</span>server<span class="token punctuation">]</span> <span class="token operator">=</span> args<span class="token punctuation">.</span>PrevLogIndex <span class="token operator">+</span> <span class="token function">len</span><span class="token punctuation">(</span>args<span class="token punctuation">.</span>Entries<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">1</span>
+		rf<span class="token punctuation">.</span>matchIndex<span class="token punctuation">[</span>server<span class="token punctuation">]</span> <span class="token operator">=</span> rf<span class="token punctuation">.</span>nextIndex<span class="token punctuation">[</span>server<span class="token punctuation">]</span> <span class="token operator">-</span> <span class="token number">1</span> <span class="token comment">//左闭右开，因此curLatestIndex指向的是最后一个发送的log的下一位可能为空</span>
+
+		<span class="token keyword">return</span>
+	<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+		<span class="token keyword">if</span> reply<span class="token punctuation">.</span>ConflictTerm <span class="token operator">!=</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token punctuation">{</span>
+			searchIndex <span class="token operator">:=</span> <span class="token operator">-</span><span class="token number">1</span>
+			<span class="token keyword">for</span> i <span class="token operator">:=</span> args<span class="token punctuation">.</span>PrevLogIndex<span class="token punctuation">;</span> i <span class="token operator">&gt;</span> rf<span class="token punctuation">.</span>lastIncludeIndex<span class="token punctuation">;</span> i<span class="token operator">--</span> <span class="token punctuation">{</span>
+				<span class="token keyword">if</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">.</span>Term <span class="token operator">==</span> reply<span class="token punctuation">.</span>ConflictTerm <span class="token punctuation">{</span>
+					searchIndex <span class="token operator">=</span> i
+				<span class="token punctuation">}</span>
+			<span class="token punctuation">}</span>
+			<span class="token keyword">if</span> searchIndex <span class="token operator">!=</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token punctuation">{</span>
+				rf<span class="token punctuation">.</span>nextIndex<span class="token punctuation">[</span>server<span class="token punctuation">]</span> <span class="token operator">=</span> searchIndex <span class="token operator">+</span> <span class="token number">1</span>
+			<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+				rf<span class="token punctuation">.</span>nextIndex<span class="token punctuation">[</span>server<span class="token punctuation">]</span> <span class="token operator">=</span> reply<span class="token punctuation">.</span>ConflictIndex
+			<span class="token punctuation">}</span>
+		<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+			rf<span class="token punctuation">.</span>nextIndex<span class="token punctuation">[</span>server<span class="token punctuation">]</span> <span class="token operator">=</span> reply<span class="token punctuation">.</span>ConflictIndex <span class="token operator">+</span> <span class="token number">1</span>
+		<span class="token punctuation">}</span>
+
+		<span class="token keyword">return</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h4 id="日志提交"><a href="#日志提交" class="headerlink" title="日志提交"></a>日志提交</h4><p>每一个服务器follower，candidat，leader都需要将LastApplied到commitIndex之间的日志通过applych提交给上层应用</p>
+<blockquote>
+<p>lastapplied和commitIndex不是易失性状态吗？</p>
+</blockquote>
+<p>是的，所以上层应用要具有接受raft层的重复日志的能力</p>
+<blockquote>
+<p>既然已经有了commitIndex，而且上层应用也能接受重复日志，为什么还需要有lastapplied？</p>
+</blockquote>
+<p>大概考虑到这几点吧</p>
+<p>1：commitIndex是跳变的，如果不实现lastapplied，那么我们需要记录commitIndex变化之前的位置，然后向应用层发送这一段log，而且为了保证应用层能接收到所有日志发，需要在commitIndex再次变化之前，百分百完成之前这次发送log的流程，这在多线程环境下实现就很复杂了</p>
+<p>2：lastApplied有个特点，它一次只增加1，在前一个log被应用层确定接受之前，不会提交下一条log。这就很大程度保障了应用层的数据安全</p>
+<blockquote>
+<p>需要留意的是任何操作applych的不能进行加锁操作，因为applyCh是个无缓冲channel，加锁几乎百分百导致死锁问题<br>但是如果不加锁又会出现一些小问题，这个问题主要在3D实验中体现，后面细说</p>
+</blockquote>
+<p>Apply函数，使用go单独开辟的协程</p>
+<p>使用<strong>函数闭包+return+defer</strong>有奇效，主打的就是一个怀念goto关键字</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 修改rf.lastApplied</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>rf <span class="token operator">*</span>Raft<span class="token punctuation">)</span> <span class="token function">undateLastApplied</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">var</span> nomore <span class="token operator">=</span> <span class="token boolean">false</span>
+	<span class="token keyword">for</span> <span class="token operator">!</span>rf<span class="token punctuation">.</span><span class="token function">killed</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		<span class="token keyword">if</span> nomore <span class="token punctuation">{</span>
+			time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>Millisecond <span class="token operator">*</span> time<span class="token punctuation">.</span><span class="token function">Duration</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+		<span class="token punctuation">}</span>
+
+		<span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+			<span class="token comment">// rf.snapshotXapplych.Lock()</span>
+			<span class="token comment">// defer rf.snapshotXapplych.Unlock()</span>
+			<span class="token comment">// DPrintf("APPLY Term[%d] [%d] Wait for the lock🔐", rf.currentTerm, rf.me)</span>
+			rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+			<span class="token comment">// DPrintf("APPLY Term[%d] [%d] Hode the lock🔐", rf.currentTerm, rf.me)</span>
+			nomore <span class="token operator">=</span> <span class="token boolean">true</span>
+			<span class="token keyword">if</span> rf<span class="token punctuation">.</span>lastApplied <span class="token operator">&lt;</span> rf<span class="token punctuation">.</span>commitIndex <span class="token punctuation">{</span>
+				rf<span class="token punctuation">.</span>lastApplied <span class="token operator">+=</span> <span class="token number">1</span>
+				index <span class="token operator">:=</span> rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>lastApplied<span class="token punctuation">)</span>
+				<span class="token keyword">if</span> index <span class="token operator">&lt;=</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token operator">||</span> index <span class="token operator">&gt;=</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>log<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+					rf<span class="token punctuation">.</span>lastApplied <span class="token operator">=</span> rf<span class="token punctuation">.</span>lastIncludeIndex
+					<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"ERROR? 👿 [%d]Ready to apply index[%d] But index out of Len of log, lastApplied[%d] commitIndex[%d] lastIncludeIndex[%d] logLen:%d"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> index<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>lastApplied<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>commitIndex<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>lastIncludeIndex<span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>log<span class="token punctuation">)</span><span class="token punctuation">)</span>
+					rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+					<span class="token keyword">return</span>
+				<span class="token punctuation">}</span>
+				<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"APPLY Term[%d] [%d] -&gt; LOG [%d] value:[%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>lastApplied<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">.</span>Value<span class="token punctuation">)</span>
+
+				ApplyMsg <span class="token operator">:=</span> ApplyMsg<span class="token punctuation">{</span>
+					CommandValid<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+					Command<span class="token punctuation">:</span>      rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">.</span>Value<span class="token punctuation">,</span>
+					CommandIndex<span class="token punctuation">:</span> rf<span class="token punctuation">.</span>lastApplied <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">,</span>
+				<span class="token punctuation">}</span>
+				<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"APPLY Term[%d] [%d] Unlock the lock🔐 For Start applyerCh &lt;- len[%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>applyChTerm<span class="token punctuation">)</span><span class="token punctuation">)</span>
+				rf<span class="token punctuation">.</span>applyChTerm <span class="token operator">&lt;-</span> ApplyMsg
+				<span class="token keyword">if</span> rf<span class="token punctuation">.</span>IisBackIndex <span class="token operator">==</span> rf<span class="token punctuation">.</span>lastApplied <span class="token punctuation">{</span>
+					<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"Term [%d] [%d] iisback = true iisbackIndex =[%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>IisBackIndex<span class="token punctuation">)</span>
+					rf<span class="token punctuation">.</span>IisBack <span class="token operator">=</span> <span class="token boolean">true</span>
+				<span class="token punctuation">}</span>
+				<span class="token comment">// DPrintf("APPLY Term[%d] [%d] lock the lock🔐 For Finish applyerCh &lt;-", rf.currentTerm, rf.me)</span>
+				nomore <span class="token operator">=</span> <span class="token boolean">false</span>
+				<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"APPLY Term[%d] [%d] AppliedIndex [%d] CommitIndex [%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>lastApplied<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>commitIndex<span class="token punctuation">)</span>
+			<span class="token punctuation">}</span>
+			rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+			<span class="token comment">// DPrintf("APPLY Term[%d] [%d] Open the lock🔓", rf.currentTerm, rf.me)</span>
+		<span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>更新commitindex的函数，我这里还是单独开辟了一个协程独立进行，主要还是为了简化逻辑吧，其实放到leader的心跳发送周期里面更新也问题不大</p>
+<blockquote>
+<p>注意只有leader可以参考matchIndex的方式更新commitIndex</p>
+<p>follower只能参考心跳中的LeaderCommitIndex更新自己的commitIndex</p>
+</blockquote>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>rf <span class="token operator">*</span>Raft<span class="token punctuation">)</span> <span class="token function">updateCommitIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token comment">//从matchIndex寻找一个大多数服务器认同的N</span>
+	<span class="token keyword">for</span> <span class="token operator">!</span>rf<span class="token punctuation">.</span><span class="token function">killed</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>Millisecond <span class="token operator">*</span> time<span class="token punctuation">.</span><span class="token function">Duration</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+		<span class="token boolean">_</span><span class="token punctuation">,</span> isleader <span class="token operator">:=</span> rf<span class="token punctuation">.</span><span class="token function">GetState</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+		<span class="token keyword">if</span> isleader <span class="token punctuation">{</span>
+			rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+			matchIndex <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span>
+			matchIndex <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>matchIndex<span class="token punctuation">,</span> rf<span class="token punctuation">.</span><span class="token function">lastIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+			<span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token keyword">range</span> rf<span class="token punctuation">.</span>peers <span class="token punctuation">{</span>
+				<span class="token keyword">if</span> i <span class="token operator">!=</span> rf<span class="token punctuation">.</span>me <span class="token punctuation">{</span>
+					matchIndex <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>matchIndex<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>matchIndex<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span>
+				<span class="token punctuation">}</span>
+			<span class="token punctuation">}</span>
+
+			sort<span class="token punctuation">.</span><span class="token function">Ints</span><span class="token punctuation">(</span>matchIndex<span class="token punctuation">)</span>
+
+			lenMat <span class="token operator">:=</span> <span class="token function">len</span><span class="token punctuation">(</span>matchIndex<span class="token punctuation">)</span> 
+			N <span class="token operator">:=</span> matchIndex<span class="token punctuation">[</span>lenMat<span class="token operator">/</span><span class="token number">2</span><span class="token punctuation">]</span> 
+			<span class="token keyword">if</span> N <span class="token operator">&gt;</span> rf<span class="token punctuation">.</span>commitIndex <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>N <span class="token operator">&lt;=</span> rf<span class="token punctuation">.</span>lastIncludeIndex <span class="token operator">||</span> rf<span class="token punctuation">.</span>currentTerm <span class="token operator">==</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>N<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">.</span>Term<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+				<span class="token comment">// DPrintf("COMIT Term[%d] [%d] It's matchIndex = %v", rf.currentTerm, rf.me, matchIndex)</span>
+				<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"COMIT Term[%d] [%d] commitIndex [%d] -&gt; [%d] (leader action)"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>commitIndex<span class="token punctuation">,</span> N<span class="token punctuation">)</span>
+				rf<span class="token punctuation">.</span>IisBackIndex <span class="token operator">=</span> N
+				rf<span class="token punctuation">.</span>commitIndex <span class="token operator">=</span> N
+			<span class="token punctuation">}</span>
+			rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+		<span class="token punctuation">}</span>
+
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>需要密切关注的细节是：<br>if N &gt; rf.commitIndex &amp;&amp; (N &lt;= rf.lastIncludeIndex || <strong>rf.currentTerm == rf.log[rf.index2LogPos(N)].Term</strong>)</p>
+<p>论文中有提到</p>
+<p><img src="/12.png" alt="图片"></p>
+<p>commitIndex将要被更新到的N这个值，其Term必须等于leader的currentTerm，否则就不能进行更新。</p>
+<p>这是因为领导人不可以直接提交以前任期的日志，只有领导人自己发出去的日志被多数follower应用之后，他才可以将CommitIndex更新到这个任期跟自己匹配的新的index，否则会发生数据错乱问题。</p>
+<p>这里贴上中文解释</p>
+<p><img src="/14.png" alt="图片"></p>
+<p>这是个比较隐秘的规则，很容易被忽略从而导致数据错乱</p>
+<hr>
+<h3 id="Part-3C-persistence-hard"><a href="#Part-3C-persistence-hard" class="headerlink" title="Part 3C: persistence (hard)"></a>Part 3C: persistence (hard)</h3><p>本次实验的代码量最少，阅读官方实验指导，它明确道在每一个持久化成员发生改变的时候调用persist（）函数进行持久化即可。</p>
+<p>所谓持久化就是将数据读到硬盘，服务器崩溃后能从硬盘中读取到最近一次持久化的数据。</p>
+<p>代码实现简单，但它确实是卡我（相信也是大多数人）最久的Part，原因无它，测试代码太变态了</p>
+<p>而即使是如此变态的Test环境，仍然无法完全测出关于raft算法的bug，这也是多线程编程的一大特点，raft算法本身再完备，经程序员实现一手后又大不一样了</p>
+<p>本次实验我所检查出的bug有这些：</p>
+<p>follower投出赞成票后忘记更新定时器了</p>
+<p>还有一个相对复杂的原因：一是RPC回复的速度太快，以至于原本期望的Leader并行同时发送多个心跳RPC，然后再不受干扰的一个一个处理返回的RPC这种情景可能不会出现，实际情况可能会出现Leader发送了第1个RPC，然后收到了回复，根据回复进行了处理，然后再继续发送剩余的心跳RPC</p>
+<p>二是函数嵌套太多，导致最外层的函数很难根据内层函数的结果进行响应，比如内层函数本意是想要终止最外层函数的整个操作，于是它进行了return，但是只return了自己这一层，外层循环还在继续</p>
+<p>假设leader的Term比接收者低，但是它刚从网络中隔离了所以不知道，继续发送带有旧Term的RPC，由于leader并行发送多个带有条目的RPC，但不是真的并行，所以发送前面的RPC中，leader如果在一个心跳RPC的响应中，发现接收者的任期比自己高，于是更新自己的任期，并转变为follower，但是此时心跳发送流程并没有立刻被停止，后面还在不停的发送RPC，并且由于已经更新到了新任期，后面这些RPC就真的被接收者采用了，从而导致数据错乱</p>
+<p>本次实验需要较长时间进行debug，爱护眼睛，写好详细的log信息，祝各位debug愉快</p>
+<h3 id="Part-3D-log-compaction-hard"><a href="#Part-3D-log-compaction-hard" class="headerlink" title="Part 3D: log compaction (hard)"></a>Part 3D: log compaction (hard)</h3><p>3D要求实现快照机制，由于不止leader可以进行快照，follower同样可以自行备份快照。</p>
+<p>关于心跳机制中日志复制的部分，还有leader和follower交互这部分要进行大改。</p>
+<p>建议每改动一处地方就马上再去测一遍ABC的测试，否则后续再debug不堪设想</p>
+<h4 id="快照流程"><a href="#快照流程" class="headerlink" title="快照流程"></a>快照流程</h4><p>前面的实验中，leader通过applych将被应用的日志发送给应用层（上层，也就是我们lab4需要实现的kvRaft中的kvserver层）</p>
+<p>上层实际上并没有一比一保存这些log，上层要做的是读取log中的操作信息，将其中的put，append等操作应用到数据库里，既然是数据库，肯定包含了很多对同一个键值对的操作，这些操作是可以压缩的</p>
+<p>假设一个例子：</p>
+<blockquote>
+<p>上层数据库<strong>初始状态</strong> 【key：1，value：x 0 y】</p>
+<p>上层数据库从raft层的applych按顺序收到一些操作数据库的log： log1【put，1，x 10 y】，log2【append，1，x 11 y】…. log42【<strong>put</strong>，1，x 100 y】，逐条应用，最后是一条put命令</p>
+<p>上层数据库log42应用后的数据库最新状态【key：1，value：x 100 y】</p>
+<p>上层数据库将当前数据库的状态复制一份，保存到硬盘里，这份备份就是<strong>数据库快照</strong>，之后无论重启多少次，都读取这份快照作为服务器重启后的数据库<strong>初始状态</strong></p>
+<p>那么很显然，raft层就再也不需要向上层发送log42之前的快照，而且也不需要保存它们（除了某些必要的信息，比如lastInludeIndex,lastIncludeTerm）</p>
+</blockquote>
+<p>这就是快照机制,减少raft层在内存和硬盘中保存的log数量，加快重启后应用层(上层数据库)恢复数据库的速度</p>
+<p>由上层调用的Snapshot（）函数：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>rf <span class="token operator">*</span>Raft<span class="token punctuation">)</span> <span class="token function">Snapshot</span><span class="token punctuation">(</span>index <span class="token builtin">int</span><span class="token punctuation">,</span> snapshot <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">byte</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token comment">// Your code here (3D).</span>
+	<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"SNAPS Term[%d] [%d] 📷Snapshot ask to snap Index[%d] Raft log Len:[%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> index<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>log<span class="token punctuation">)</span><span class="token punctuation">)</span>
+	rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token keyword">defer</span> rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	index <span class="token operator">-=</span> <span class="token number">1</span>
+	<span class="token keyword">if</span> index <span class="token operator">&lt;=</span> rf<span class="token punctuation">.</span>lastIncludeIndex <span class="token punctuation">{</span>
+		<span class="token keyword">return</span>
+	<span class="token punctuation">}</span>
+	compactLoglen <span class="token operator">:=</span> index <span class="token operator">-</span> rf<span class="token punctuation">.</span>lastIncludeIndex
+	<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"SNAPS Term[%d] [%d] After📷,lastIncludeIndex[%d]-&gt;[%d] lastIncludeTerm[%d]-&gt;[%d] len of Log-&gt;[%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>lastIncludeIndex<span class="token punctuation">,</span> index<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>lastIncludeTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>index<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">.</span>Term<span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>log<span class="token punctuation">)</span><span class="token operator">-</span>compactLoglen<span class="token punctuation">)</span>
+
+	rf<span class="token punctuation">.</span>lastIncludeTerm <span class="token operator">=</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>index<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">.</span>Term
+	rf<span class="token punctuation">.</span>lastIncludeIndex <span class="token operator">=</span> index
+
+	<span class="token comment">//压缩日志</span>
+	afterLog <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span>LogType<span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>log<span class="token punctuation">)</span><span class="token operator">-</span>compactLoglen<span class="token punctuation">)</span>
+	<span class="token function">copy</span><span class="token punctuation">(</span>afterLog<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>compactLoglen<span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+	rf<span class="token punctuation">.</span>log <span class="token operator">=</span> afterLog
+	<span class="token comment">//把snapshot和raftstate持久化</span>
+	rf<span class="token punctuation">.</span>SnapshotDate <span class="token operator">=</span> snapshot
+	rf<span class="token punctuation">.</span>persister<span class="token punctuation">.</span><span class="token function">Save</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span><span class="token function">persistWithSnapshot</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> snapshot<span class="token punctuation">)</span>
+	<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"📷Cmi Term[%d] [%d] 📦Save snapshot to application[%d] (Receive from up Application)"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>persister<span class="token punctuation">.</span>snapshot<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>2024新版lab最坑的一点来了，rf.persister.Save同时保存raftState和snapshot</p>
+<p>在之前的实验中，实验指导给第二个参数赋值nil，但是在lab3D中，任何一处rf.persister.Save(rf.persistWithSnapshot(), nil)都会将已保存的snapshot数据<strong>完全删掉</strong>，很坑，非常坑</p>
+<p>因为快照机制，leader会将index前的所有log删干净，那如果发生日志回退了，nextIndex一直回退到等于log42及之前怎么办呢</p>
+<p>在这种情况，根据论文，我们需要leader主动将自己的快照发送过去，覆盖掉这个落后followr的快照，然后leader对于这个follower的matchIndex至少也是42了，后续再发生日志回退，也不可能回退到42，因为发送过快照的缘故两者之间的日志在42处一定是匹配的</p>
+<p>leader发送快照：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>rf <span class="token operator">*</span>Raft<span class="token punctuation">)</span> <span class="token function">sendInstallSnapshotToPeerId</span><span class="token punctuation">(</span>server <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token comment">// DPrintf("SNAPS Term[%d] [%d] goSend📷Wait for a lock🤨 to [%d],", rf.currentTerm, rf.me, server)</span>
+	rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	args <span class="token operator">:=</span> <span class="token operator">&amp;</span>SnapshotInstallArgs<span class="token punctuation">{</span><span class="token punctuation">}</span>
+	args<span class="token punctuation">.</span>Term <span class="token operator">=</span> rf<span class="token punctuation">.</span>currentTerm
+	args<span class="token punctuation">.</span>LeaderId <span class="token operator">=</span> rf<span class="token punctuation">.</span>me
+	args<span class="token punctuation">.</span>LastIncludeIndex <span class="token operator">=</span> rf<span class="token punctuation">.</span>lastIncludeIndex
+	args<span class="token punctuation">.</span>LastIncludeTerm <span class="token operator">=</span> rf<span class="token punctuation">.</span>lastIncludeTerm
+	args<span class="token punctuation">.</span>Data <span class="token operator">=</span> rf<span class="token punctuation">.</span>SnapshotDate
+	<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"SNAPS Term[%d] [%d] goSend📷 to [%d] args.LastIncludeIndex[%d],args.LastIncludeTerm[%d],len of snapshot[%d],"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> server<span class="token punctuation">,</span> args<span class="token punctuation">.</span>LastIncludeIndex<span class="token punctuation">,</span> args<span class="token punctuation">.</span>LastIncludeTerm<span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>args<span class="token punctuation">.</span>Data<span class="token punctuation">)</span><span class="token punctuation">)</span>
+	rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token keyword">go</span> <span class="token keyword">func</span><span class="token punctuation">(</span>args <span class="token operator">*</span>SnapshotInstallArgs<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+		reply <span class="token operator">:=</span> <span class="token operator">&amp;</span>SnapshotInstallreplys<span class="token punctuation">{</span><span class="token punctuation">}</span>
+		<span class="token keyword">if</span> rf<span class="token punctuation">.</span><span class="token function">sendInstallSnapshot</span><span class="token punctuation">(</span>server<span class="token punctuation">,</span> args<span class="token punctuation">,</span> reply<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+			rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+			<span class="token keyword">defer</span> rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+			<span class="token keyword">if</span> rf<span class="token punctuation">.</span>currentTerm <span class="token operator">!=</span> args<span class="token punctuation">.</span>Term <span class="token punctuation">{</span>
+				<span class="token keyword">return</span>
+			<span class="token punctuation">}</span>
+			<span class="token keyword">if</span> reply<span class="token punctuation">.</span>Term <span class="token operator">&gt;</span> rf<span class="token punctuation">.</span>currentTerm <span class="token punctuation">{</span>
+				rf<span class="token punctuation">.</span>state <span class="token operator">=</span> follower
+				rf<span class="token punctuation">.</span>leaderId <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
+				rf<span class="token punctuation">.</span>currentTerm <span class="token operator">=</span> reply<span class="token punctuation">.</span>Term
+				rf<span class="token punctuation">.</span>votedFor <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
+				rf<span class="token punctuation">.</span><span class="token function">persist</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+				<span class="token keyword">return</span>
+			<span class="token punctuation">}</span>
+			<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"SNAPS Term[%d] [%d] leader success to Send a 📷 to [%d] nextIndex for it [%d] -&gt; [%d] matchIndex [%d] -&gt; [%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> server<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>nextIndex<span class="token punctuation">[</span>server<span class="token punctuation">]</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span><span class="token function">lastIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>matchIndex<span class="token punctuation">[</span>server<span class="token punctuation">]</span><span class="token punctuation">,</span> args<span class="token punctuation">.</span>LastIncludeIndex<span class="token punctuation">)</span>
+			rf<span class="token punctuation">.</span>nextIndex<span class="token punctuation">[</span>server<span class="token punctuation">]</span> <span class="token operator">=</span> rf<span class="token punctuation">.</span><span class="token function">lastIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">1</span>
+			rf<span class="token punctuation">.</span>matchIndex<span class="token punctuation">[</span>server<span class="token punctuation">]</span> <span class="token operator">=</span> args<span class="token punctuation">.</span>LastIncludeIndex
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span><span class="token punctuation">(</span>args<span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>follower接受快照：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>rf <span class="token operator">*</span>Raft<span class="token punctuation">)</span> <span class="token function">InstallSnapshot</span><span class="token punctuation">(</span>args <span class="token operator">*</span>SnapshotInstallArgs<span class="token punctuation">,</span> reply <span class="token operator">*</span>SnapshotInstallreplys<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token keyword">defer</span> rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"SNAPS Term[%d] [%d] Receiv📷 from[%d] lastIncludeIndex[%d] lastIncludeTerm[%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> args<span class="token punctuation">.</span>LeaderId<span class="token punctuation">,</span> args<span class="token punctuation">.</span>LastIncludeIndex<span class="token punctuation">,</span> args<span class="token punctuation">.</span>LastIncludeTerm<span class="token punctuation">)</span>
+
+	reply<span class="token punctuation">.</span>Term <span class="token operator">=</span> rf<span class="token punctuation">.</span>currentTerm
+
+	<span class="token keyword">if</span> args<span class="token punctuation">.</span>Term <span class="token operator">&lt;</span> rf<span class="token punctuation">.</span>currentTerm <span class="token punctuation">{</span>
+		<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"SNAPS Term[%d] [%d] reject📷 for it's Term[%d] [too old]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> args<span class="token punctuation">.</span>Term<span class="token punctuation">)</span>
+		<span class="token keyword">return</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token keyword">if</span> args<span class="token punctuation">.</span>Term <span class="token operator">&gt;</span> rf<span class="token punctuation">.</span>currentTerm <span class="token punctuation">{</span>
+		rf<span class="token punctuation">.</span>currentTerm <span class="token operator">=</span> args<span class="token punctuation">.</span>Term
+		rf<span class="token punctuation">.</span>state <span class="token operator">=</span> follower
+		rf<span class="token punctuation">.</span>votedFor <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
+		rf<span class="token punctuation">.</span><span class="token function">persist</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+
+	rf<span class="token punctuation">.</span>leaderId <span class="token operator">=</span> args<span class="token punctuation">.</span>LeaderId
+	rf<span class="token punctuation">.</span>lastHearBeatTime <span class="token operator">=</span> time<span class="token punctuation">.</span><span class="token function">Now</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	<span class="token keyword">if</span> args<span class="token punctuation">.</span>LastIncludeIndex <span class="token operator">&lt;=</span> rf<span class="token punctuation">.</span>lastIncludeIndex <span class="token punctuation">{</span>
+		<span class="token keyword">return</span>
+	<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+		<span class="token keyword">if</span> args<span class="token punctuation">.</span>LastIncludeIndex <span class="token operator">&lt;</span> rf<span class="token punctuation">.</span><span class="token function">lastIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+			<span class="token keyword">if</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>args<span class="token punctuation">.</span>LastIncludeIndex<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">.</span>Term <span class="token operator">!=</span> args<span class="token punctuation">.</span>LastIncludeTerm <span class="token punctuation">{</span>
+				rf<span class="token punctuation">.</span>log <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span>LogType<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span>
+			<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+				<span class="token comment">// leftLog := make([]LogType, rf.lastIndex()-args.LastIncludeIndex)</span>
+				<span class="token comment">// copy(leftLog, rf.log[rf.index2LogPos(rf.lastIncludeIndex+1):])</span>
+				<span class="token comment">// rf.log = leftLog</span>
+				rf<span class="token punctuation">.</span>log <span class="token operator">=</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>rf<span class="token punctuation">.</span><span class="token function">index2LogPos</span><span class="token punctuation">(</span>args<span class="token punctuation">.</span>LastIncludeIndex<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span><span class="token punctuation">]</span>
+			<span class="token punctuation">}</span>
+		<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+			rf<span class="token punctuation">.</span>log <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span>LogType<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span>
+		<span class="token punctuation">}</span>
+	<span class="token punctuation">}</span>
+	<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"SNAPS Term[%d] [%d] Accept📷 Now it's lastIncludeIndex [%d] -&gt; [%d] lastIncludeTerm [%d] -&gt; [%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>lastIncludeIndex<span class="token punctuation">,</span> args<span class="token punctuation">.</span>LastIncludeIndex<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>lastIncludeTerm<span class="token punctuation">,</span> args<span class="token punctuation">.</span>LastIncludeTerm<span class="token punctuation">)</span>
+	<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"snaps Term[%d] [%d] after snapshot log:"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">)</span>
+
+	rf<span class="token punctuation">.</span>lastIncludeIndex <span class="token operator">=</span> args<span class="token punctuation">.</span>LastIncludeIndex
+	rf<span class="token punctuation">.</span>lastIncludeTerm <span class="token operator">=</span> args<span class="token punctuation">.</span>LastIncludeTerm
+
+	i <span class="token operator">:=</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>log<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">10</span>
+	<span class="token keyword">if</span> i <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+		i <span class="token operator">=</span> <span class="token number">0</span>
+	<span class="token punctuation">}</span>
+	<span class="token keyword">for</span> <span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>log<span class="token punctuation">)</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">{</span>
+		<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"Term[%d] [%d] index[%d] value[%v]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> i<span class="token operator">+</span>rf<span class="token punctuation">.</span>lastIncludeIndex<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>log<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span>
+	<span class="token punctuation">}</span>
+
+	<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"📷Cmi Term[%d] [%d] 📦Save snapshot to application[%d] (Receive from leader)"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>persister<span class="token punctuation">.</span>snapshot<span class="token punctuation">)</span><span class="token punctuation">)</span>
+	<span class="token comment">//snapshot提交给应用层</span>
+	applyMsg <span class="token operator">:=</span> ApplyMsg<span class="token punctuation">{</span>
+		SnapshotValid<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+		Snapshot<span class="token punctuation">:</span>      args<span class="token punctuation">.</span>Data<span class="token punctuation">,</span>
+		SnapshotIndex<span class="token punctuation">:</span> rf<span class="token punctuation">.</span>lastIncludeIndex <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token comment">//记得这里有个坑</span>
+		SnapshotTerm<span class="token punctuation">:</span>  rf<span class="token punctuation">.</span>lastIncludeTerm<span class="token punctuation">,</span>
+	<span class="token punctuation">}</span>
+	<span class="token comment">//快照提交给了application</span>
+	rf<span class="token punctuation">.</span>lastApplied <span class="token operator">=</span> rf<span class="token punctuation">.</span>lastIncludeIndex
+	<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"📷Cmi Term[%d] [%d] Ready to commit snapshot snapshotIndex[%d] snapshotTerm[%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>lastIncludeIndex<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>lastIncludeTerm<span class="token punctuation">)</span>
+	rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	rf<span class="token punctuation">.</span>applyChTerm <span class="token operator">&lt;-</span> applyMsg
+	rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	<span class="token comment">//持久化快照</span>
+	rf<span class="token punctuation">.</span>SnapshotDate <span class="token operator">=</span> args<span class="token punctuation">.</span>Data
+	rf<span class="token punctuation">.</span>persister<span class="token punctuation">.</span><span class="token function">Save</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span><span class="token function">persistWithSnapshot</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> args<span class="token punctuation">.</span>Data<span class="token punctuation">)</span>
+	<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"📷Cmi Term[%d] [%d] Done Success to comit snapshot snapshotIndex[%d] snapshotTerm[%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>lastIncludeIndex<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>lastIncludeTerm<span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>由于日志会因为快照被删除，所以log在logs数组中的位置发生了错误，具体来说：realPos = index - lastIncludeIndex - 1</p>
+<p>这就是我实现Lab3 Raft的主要思路了，实际实现的时候还有很多其他细节需要考虑，留给读者自行体验了</p>
+<p><img src="/8.png" alt="测试图"></p>
+<p><img src="/15.png" alt="多次测试图"></p>
+
+  </article>
+  <!-- tag -->
+  <div class="mt-12 pt-6 border-t border-gray-200">
+    
+      
+        <span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 m-1 text-sm rounded-md transition-colors hover:bg-gray-200">
+          <a href="/tags/MIT6-5840/">MIT6.5840</a>
+        </span>
+      
+    
+  </div>
+  <!-- prev and next -->
+  <div class="flex justify-between mt-12 pt-6 border-t border-gray-200">
+    <div>
+      
+        <a href="/2024/04/05/mit65840lab4shixian/" class="text-sm text-gray-400 hover:text-gray-500 flex justify-center">
+          <iconify-icon width="20" icon="ri:arrow-left-s-line" data-inline="false"></iconify-icon>
+          MIT6.5840 Lab4 Get无日志实现
+        </a>
+      
+    </div>
+    <div>
+      
+        <a href="/2024/04/04/mit65840lab2shixian/" class="text-sm text-gray-400 hover:text-gray-500 flex justify-center">
+          MIT6.5840 Lab2 实现
+          <iconify-icon width="20" icon="ri:arrow-right-s-line" data-inline="false"></iconify-icon>
+        </a>
+      
+    </div>
+  </div>
+  <!-- comment -->
+  <div class="article-comments mt-12">
+    
+
+  </div>
+</section>
+<!-- js inspect -->
+
+<script src="/lib/clipboard.min.js"></script>
+
+
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+        preferredFont: "TeX",
+        availableFonts: ["STIX","TeX"],
+        linebreaks: { automatic:true },
+        EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
+    },
+    tex2jax: {
+        inlineMath: [ ["$", "$"], ["\\(","\\)"] ],
+        processEscapes: true,
+        ignoreClass: "tex2jax_ignore|dno",
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        equationNumbers: { autoNumber: "AMS" },
+        noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } },
+        Macros: { href: "{}" }
+    },
+    messageStyle: "none"
+  });
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+  $(document).ready(() => {
+    const maraidConfig = {
+      theme: "default",
+      logLevel: 3,
+      flowchart: { curve: "linear" },
+      gantt: { axisFormat: "%m/%d/%Y" },
+      sequence: { actorMargin: 50 },
+    };
+    mermaid.initialize(maraidConfig);
+  });
+</script>
+
+
+
+<script src="/lib/fancybox/fancybox.umd.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+    $('.post-content').each(function(i){
+      $(this).find('img').each(function(){
+        if ($(this).parent().hasClass('fancybox') || $(this).parent().is('a')) return;
+        var alt = this.alt;
+        if (alt) $(this).after('<span class="fancybox-alt">' + alt + '</span>');
+        $(this).wrap('<a class="fancybox-img" href="' + this.src + '" data-fancybox=\"gallery\" data-caption="' + alt + '"></a>')
+      });
+      $(this).find('.fancybox').each(function(){
+        $(this).attr('rel', 'article' + i);
+      });
+    });
+
+    Fancybox.bind('[data-fancybox="gallery"]', {
+        // options
+    })
+  })
+</script>
+
+<!-- tocbot begin -->
+
+<script src="/lib/tocbot/tocbot.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+      tocbot.init({
+        // Where to render the table of contents.
+        tocSelector: '.post-toc',
+        // Where to grab the headings to build the table of contents.
+        contentSelector: '.post-content',
+        // Which headings to grab inside of the contentSelector element.
+        headingSelector: 'h1, h2, h3',
+        // For headings inside relative or absolute positioned containers within content.
+        hasInnerContainers: true,
+    });
+  })
+</script>
+<!-- tocbot end -->
+
+
+  </main>
+  <footer class="flex flex-col h-40 items-center justify-center text-gray-400 text-sm">
+  <!-- busuanzi -->
+  
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<!-- Busuanzi Analytics -->
+<div class="flex items-center gap-2">
+  <span>Visitors</span>
+  <span id="busuanzi_value_site_uv"></span>
+  <span>Page Views</span>
+  <span id="busuanzi_value_site_pv"></span>
+</div>
+<!-- End Busuanzi Analytics -->
+
+
+  <!-- copyright -->
+  <div class="flex items-center gap-2">
+    <a target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" style="color: inherit;">CC BY-NC-SA 4.0</a>
+    <span>© 2022</span>
+    <iconify-icon width="18" icon="emojione-monotone:maple-leaf" ></iconify-icon>
+    <a href="https://github.com/xbmlz" target="_blank" rel="noopener noreferrer">xbmlz</a>
+  </div>
+  <!-- powered by -->
+  <div class="flex items-center gap-2">
+    <span>Powered by</span>
+    <a href="https://hexo.io/" target="_blank" rel="noopener noreferrer">Hexo</a>
+    <span>&</span>
+    <a href="https://github.com/xbmlz/hexo-theme-maple" target="_blank" rel="noopener noreferrer">Maple</a>
+  </div>
+
+</footer>
+
+  <div class="back-to-top box-border fixed right-6 z-1024 -bottom-20 rounded py-1 px-1 bg-slate-900 opacity-60 text-white cursor-pointer text-center dark:bg-slate-600">
+    <span class="flex justify-center items-center text-sm">
+      <iconify-icon width="18" icon="ion:arrow-up-c" id="go-top"></iconify-icon>
+      <span id="scrollpercent"><span>0</span> %</span>
+    </span>
+  </div>
+  
+<script src="/js/main.js"></script>
+
+
+  <script>
+    $(document).ready(function () {
+      const mapleCount = "10";
+      const speed = "0.5";
+      const mapleEl = document.getElementById("maple");
+      const maples = Array.from({ length: mapleCount }).map(() => {
+        const maple = document.createElement("div");
+        const scale = Math.random() * 0.5 + 0.5;
+        const offset = Math.random() * 2 - 1;
+        const x = Math.random() * mapleEl.clientWidth;
+        const y = -Math.random() * mapleEl.clientHeight;
+        const duration = 10 / speed;
+        const delay = -duration;
+        maple.className = "maple";
+        maple.style.width = `${24 * scale}px`;
+        maple.style.height = `${24 * scale}px`;
+        maple.style.left = `${x}px`;
+        maple.style.top = `${y}px`;
+        maple.style.setProperty("--maple-fall-offset", offset);
+        maple.style.setProperty("--maple-fall-height", `${Math.abs(y) + mapleEl.clientHeight}px`);
+        maple.style.animation = `fall ${duration}s linear infinite`;
+        maple.style.animationDelay = `${delay}s`;
+        mapleEl.appendChild(maple)
+        return maple
+      })
+    });
+  </script>
+  
+
+
+  <div class="fixed top-0 bottom-0 left-0 right-0 pointer-events-none print:hidden" id="maple"></div>
+</body>
+
+</html>
