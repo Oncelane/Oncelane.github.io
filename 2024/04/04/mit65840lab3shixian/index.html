@@ -2,264 +2,227 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.1.1">
 
-
-
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-<meta http-equiv="X-UA-Compatible" content="ie=edge">
-
-  <meta name="author" content="Xiur">
-
-
-  <meta name="subtitle" content="闲来记事">
-
-
-  <meta name="description" content="已巷的个人小站">
-
-
-
-<title>MIT6.5840 Lab3 实现 | Oncelane</title>
-
-
-
-<link rel="icon" href="/favicon.png">
-
-
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
 
 <link rel="stylesheet" href="/css/main.css">
 
 
-<link rel="stylesheet" href="/lib/nprogress/nprogress.css">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha256-wiz7ZSCn/btzhjKDQBms9Hx4sSeUYsDrTLg7roPstac=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"oncelane.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.19.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="6.5840 Lab 3: Raft本节实验的目标是实现Raft分布一致性算法，不必多说，此节为所有实验中最重要的部分，也是最能劝退实验者的一节 在实验开始前一定要仔细阅读raft论文，编写代码中也要反复确认有没有正确实现论文中的规则 extended Raft paper">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT6.5840 Lab3 实现">
+<meta property="og:url" content="https://oncelane.github.io/2024/04/04/mit65840lab3shixian/index.html">
+<meta property="og:site_name" content="Oncelane">
+<meta property="og:description" content="6.5840 Lab 3: Raft本节实验的目标是实现Raft分布一致性算法，不必多说，此节为所有实验中最重要的部分，也是最能劝退实验者的一节 在实验开始前一定要仔细阅读raft论文，编写代码中也要反复确认有没有正确实现论文中的规则 extended Raft paper">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://oncelane.github.io/2024/04/04/mit65840lab3shixian/7.png">
+<meta property="og:image" content="https://oncelane.github.io/">
+<meta property="og:image" content="https://oncelane.github.io/2024/04/04/mit65840lab3shixian/12.png">
+<meta property="og:image" content="https://oncelane.github.io/2024/04/04/mit65840lab3shixian/14.png">
+<meta property="og:image" content="https://oncelane.github.io/2024/04/04/mit65840lab3shixian/8.png">
+<meta property="og:image" content="https://oncelane.github.io/15.png">
+<meta property="article:published_time" content="2024-04-04T06:55:32.000Z">
+<meta property="article:modified_time" content="2024-04-06T02:46:47.304Z">
+<meta property="article:author" content="Xiur">
+<meta property="article:tag" content="MIT6.5840">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://oncelane.github.io/2024/04/04/mit65840lab3shixian/7.png">
+
+
+<link rel="canonical" href="https://oncelane.github.io/2024/04/04/mit65840lab3shixian/">
 
 
 
-<script src="/lib/jquery.min.js"></script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://oncelane.github.io/2024/04/04/mit65840lab3shixian/","path":"2024/04/04/mit65840lab3shixian/","title":"MIT6.5840 Lab3 实现"}</script>
 
-
-<script src="/lib/iconify-icon.min.js"></script>
-
-
-<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
-<script>
-  tailwind.config = {
-    darkMode: "class",
-  };
-</script>
-
-
-<script src="/lib/nprogress/nprogress.js"></script>
-
-<script>
-  $(document).ready(() => {
-    NProgress.configure({
-      showSpinner: false,
-    });
-    NProgress.start();
-    $("#nprogress .bar").css({
-      background: "#de7441",
-    });
-    $("#nprogress .peg").css({
-      "box-shadow": "0 0 2px #de7441, 0 0 4px #de7441",
-    });
-    $("#nprogress .spinner-icon").css({
-      "border-top-color": "#de7441",
-      "border-left-color": "#de7441",
-    });
-    setTimeout(function () {
-      NProgress.done();
-      $(".fade").removeClass("out");
-    }, 800);
-  });
-</script>
-
-<script>
-  (function () {
-    const prefersDark =
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const setting = localStorage.getItem("hexo-color-scheme") || "auto";
-    if (setting === "dark" || (prefersDark && setting !== "light"))
-      document.documentElement.classList.toggle("dark", true);
-    let isDark = document.documentElement.classList.contains("dark");
-  })();
-
-  $(document).ready(function () {
-    // init icon
-    const prefersDark =
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const isDark = document.documentElement.classList.contains("dark");
-    $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
-
-    function toggleGiscusTheme() {
-      const isDark = document.documentElement.classList.contains("dark");
-      const giscusFrame = document.querySelector("iframe.giscus-frame");
-      if (giscusFrame) {
-        giscusFrame.contentWindow.postMessage(
-          {
-            giscus: {
-              setConfig: {
-                theme: isDark ? "dark" : "light",
-              },
-            },
-          },
-          "https://giscus.app"
-        );
-      }
-    }
-
-
-    // toggle dark mode
-    function toggleDark() {
-      let isDark = document.documentElement.classList.contains("dark");
-      const setting = localStorage.getItem("hexo-color-scheme") || "auto";
-      isDark = !isDark;
-      document.documentElement.classList.toggle("dark", isDark);
-      $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
-      if (prefersDark === isDark) {
-        localStorage.setItem("hexo-color-scheme", "auto");
-      } else {
-        localStorage.setItem("hexo-color-scheme", isDark ? "dark" : "light");
-      }
-      toggleGiscusTheme();
-    }
-    $("#toggle-dark").click(toggleDark);
-
-    // listen dark mode change
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", (e) => {
-        const setting = localStorage.getItem("hexo-color-scheme") || "auto";
-        if (setting === "auto") {
-          document.documentElement.classList.toggle("dark", e.matches);
-          $("#theme-icon").attr(
-            "icon",
-            e.matches ? "ri:moon-line" : "ri:sun-line"
-          );
-          toggleGiscusTheme();
-        }
-      });
-  });
-</script>
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>MIT6.5840 Lab3 实现 | Oncelane</title>
+  
 
 
 
 
-<meta name="generator" content="Hexo 7.0.0">
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+
 <style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
 </head>
-<body class="font-sans bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-200 relative">
-  <header class="fixed w-full px-5 py-1 z-10 backdrop-blur-xl backdrop-saturate-150 border-b border-black/5">
-  <div class="max-auto">
-    <nav class="flex items-center text-base">
-      <a href="/" class="group">
-        <h2 class="font-medium tracking-tighterp text-l p-2">
-          <img class="w-5 mr-2 inline-block transition-transform group-hover:rotate-[30deg]" id="logo" src="/images/logo.svg" alt="Oncelane" />
-          Oncelane
-        </h2>
-      </a>
-      <div id="header-title" class="opacity-0 md:ml-2 md:mt-[0.1rem] text-xs font-medium whitespace-nowrap overflow-hidden overflow-ellipsis">
-        MIT6.5840 Lab3 实现
-      </div>
-      <div class="flex-1"></div>
-      <div class="flex items-center gap-3">
-        
-          <a class="hidden sm:flex" href="/archives">Posts</a>
-        
-        
-          
-            <a class="w-5 h-5 hidden sm:flex" title="Github" target="_blank" rel="noopener" href="https://github.com/xbmlz">
-              <iconify-icon width="20" icon="ri:github-line"></iconify-icon>
-            </a>
-          
-        
-        <a class="w-5 h-5 hidden sm:flex" title="Github" href="rss2.xml">
-          <iconify-icon width="20" icon="ri:rss-line"></iconify-icon>
-        </a>
-        <a class="w-5 h-5" title="toggle theme" id="toggle-dark">
-          <iconify-icon width="20" icon="" id="theme-icon"></iconify-icon>
-        </a>
-      </div>
-      <div class="flex items-center justify-center gap-3 ml-3 sm:hidden">
-        <span class="w-5 h-5" aria-hidden="true" role="img" id="open-menu">
-          <iconify-icon width="20" icon="carbon:menu" ></iconify-icon>
-        </span>
-        <span class="w-5 h-5 hidden" aria-hidden="true" role="img" id="close-menu">
-          <iconify-icon  width="20" icon="carbon:close" ></iconify-icon>
-        </span>
-      </div>
-    </nav>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+    </div>
   </div>
-</header>
-<div id="menu-panel" class="h-0 overflow-hidden sm:hidden fixed left-0 right-0 top-12 bottom-0 z-10">
-  <div id="menu-content" class="relative z-20 bg-white/80 px-6 sm:px-8 py-2 backdrop-blur-xl -translate-y-full transition-transform duration-300">
-    <ul class="nav flex flex-col sm:flex-row text-sm font-medium">
-      
-        <li class="nav-portfolio sm:mx-2 border-b sm:border-0 border-black/5 last:border-0 hover:text-main">
-          <a href="/archives" class="flex h-12 sm:h-auto items-center">Posts</a>
-        </li>
-      
-    </ul>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Oncelane</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">闲来记事</p>
   </div>
-  <div class="mask bg-black/20 absolute inset-0"></div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
 </div>
 
-  <main class="pt-14">
-    <!-- css -->
-
-<link rel="stylesheet" href="/lib/fancybox/fancybox.min.css">
 
 
-<link rel="stylesheet" href="/lib/tocbot/tocbot.min.css">
-
-<!-- toc -->
-
-  <!-- tocbot -->
-<nav class="post-toc toc text-sm w-48 relative top-32 right-0 opacity-70 hidden lg:block" style="position: fixed !important;"></nav>
 
 
-<section class="px-6 max-w-prose mx-auto md:px-0">
-  <!-- header -->
-  <header class="overflow-hidden pt-6 pb-6 md:pt-12">
-    <div class="pt-4 md:pt-6">
-      <h1 id="article-title" class="text-[2rem] font-bold leading-snug mb-4 md:mb-6 md:text-[2.6rem]">
-        MIT6.5840 Lab3 实现
-      </h1>
-      <div>
-        <section class="flex items-center gap-3 text-sm">
-          <span class="flex items-center gap-1">
-            <iconify-icon width="18" icon="carbon-calendar" ></iconify-icon>
-            <time>2024-04-05</time>
-          </span>
-          <span class="text-gray-400">·</span>
-          <span class="flex items-center gap-1">
-            <iconify-icon width="18" icon="ic:round-access-alarm" ></iconify-icon>
-            <span>40 min</span>
-          </span>
-          <span class="text-gray-400">·</span>
-          <span class="flex items-center gap-1">
-            <iconify-icon width="18" icon="icon-park-outline:font-search" ></iconify-icon>
-            <span>9.6k words</span>
-          </span>
-          
-        </section>
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#6-5840-Lab-3-Raft"><span class="nav-number">1.</span> <span class="nav-text">6.5840 Lab 3: Raft</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Part-3A-leader-election-moderate"><span class="nav-number">1.2.</span> <span class="nav-text">Part 3A: leader election (moderate)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E6%9E%84%E4%BD%93%E5%AE%9A%E4%B9%89"><span class="nav-number">1.2.1.</span> <span class="nav-text">结构体定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%89%E4%B8%BE%E6%9C%BA%E5%88%B6"><span class="nav-number">1.2.2.</span> <span class="nav-text">选举机制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BF%83%E8%B7%B3%E6%9C%BA%E5%88%B6"><span class="nav-number">1.2.3.</span> <span class="nav-text">心跳机制</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Part-3B-log-hard"><span class="nav-number">1.3.</span> <span class="nav-text">Part 3B: log (hard)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E5%A4%8D%E5%88%B6"><span class="nav-number">1.3.1.</span> <span class="nav-text">日志复制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#leader%E6%97%A5%E5%BF%97%E5%8F%91%E9%80%81"><span class="nav-number">1.3.1.1.</span> <span class="nav-text">leader日志发送</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#follower%E6%97%A5%E5%BF%97%E5%A4%8D%E5%88%B6"><span class="nav-number">1.3.1.2.</span> <span class="nav-text">follower日志复制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E5%BF%AB%E9%80%9F%E5%9B%9E%E9%80%80"><span class="nav-number">1.3.1.3.</span> <span class="nav-text">日志快速回退</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E6%8F%90%E4%BA%A4"><span class="nav-number">1.3.2.</span> <span class="nav-text">日志提交</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Part-3C-persistence-hard"><span class="nav-number">1.4.</span> <span class="nav-text">Part 3C: persistence (hard)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Part-3D-log-compaction-hard"><span class="nav-number">1.5.</span> <span class="nav-text">Part 3D: log compaction (hard)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BF%AB%E7%85%A7%E6%B5%81%E7%A8%8B"><span class="nav-number">1.5.1.</span> <span class="nav-text">快照流程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#leader%E4%B8%BB%E5%8A%A8%E5%BF%AB%E7%85%A7"><span class="nav-number">1.5.1.1.</span> <span class="nav-text">leader主动快照</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#leader%E5%8F%91%E9%80%81%E5%BF%AB%E7%85%A7%EF%BC%9A"><span class="nav-number">1.5.1.2.</span> <span class="nav-text">leader发送快照：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#follower%E6%8E%A5%E5%8F%97%E5%BF%AB%E7%85%A7%EF%BC%9A"><span class="nav-number">1.5.1.3.</span> <span class="nav-text">follower接受快照：</span></a></li></ol></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Xiur</p>
+  <div class="site-description" itemprop="description">已巷的个人小站</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+        </div>
       </div>
     </div>
-  </header>
-  <!-- content -->
-  <article class="post-content prose m-auto slide-enter-content dark:prose-invert">
-    <h1 id="6-5840-Lab-3-Raft"><a href="#6-5840-Lab-3-Raft" class="headerlink" title="6.5840 Lab 3: Raft"></a>6.5840 Lab 3: Raft</h1><p>本节实验的目标是实现Raft分布一致性算法，不必多说，此节为所有实验中最重要的部分，也是最能劝退实验者的一节</p>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://oncelane.github.io/2024/04/04/mit65840lab3shixian/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Xiur">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Oncelane">
+      <meta itemprop="description" content="已巷的个人小站">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="MIT6.5840 Lab3 实现 | Oncelane">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MIT6.5840 Lab3 实现
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2024-04-04 14:55:32" itemprop="dateCreated datePublished" datetime="2024-04-04T14:55:32+08:00">2024-04-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2024-04-06 10:46:47" itemprop="dateModified" datetime="2024-04-06T10:46:47+08:00">2024-04-06</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="6-5840-Lab-3-Raft"><a href="#6-5840-Lab-3-Raft" class="headerlink" title="6.5840 Lab 3: Raft"></a>6.5840 Lab 3: Raft</h1><p>本节实验的目标是实现Raft分布一致性算法，不必多说，此节为所有实验中最重要的部分，也是最能劝退实验者的一节</p>
 <p>在实验开始前一定要仔细阅读raft论文，编写代码中也要反复确认有没有正确实现论文中的规则</p>
 <p><a target="_blank" rel="noopener" href="https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf">extended Raft paper</a></p>
-<p>论文最重要的图</p>
-<p><img src="/7.png"></p>
-<h3 id="Raft"><a href="#Raft" class="headerlink" title="Raft"></a>Raft</h3><p>raft算法就不在这详细介绍了，直接阅读资料即可</p>
+<span id="more"></span>
+
+<p>论文中最重要的图：</p>
+<p><img src="/2024/04/04/mit65840lab3shixian/7.png" alt="Raft协议"></p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>raft算法就不在这详细介绍了，不自行阅读论文等资料是不可能独立完成本实验的</p>
 <p>由于本人一开始没有使用git进行版本管理，因此初次通过A、B、C部分的代码都没有得到保留，只留下了最终通过D部分的代码。</p>
 <p>由于ABCD四个part的实验是增量的关系，后续的测试还会间接地加强测试前面实现的内容，初次通过测试通过的代码段并不一定就是正确的，会在后续的严格测试中暴露出问题。</p>
 <p>所以ABC三部分就不放具体代码了，主要以介绍我在实验中的思路，遇到的坑为主。</p>
 <p>再次强调的是，前期实现的raft算法必须坚固可靠，否则后面回过头来修改会非常的痛苦。建议使用第三方测试脚本并行跑实验测试，至少也要保证能够连续100次通过实验，理想的通过次数应该是千次吧…鉴于本人电脑CPU比较垃圾，也就跑跑百次级别的实验。（在攥写博客期间进行过几次高并行测试，也是直接把虚拟机干崩溃了</p>
-<h3 id="Part-3A-leader-election-moderate"><a href="#Part-3A-leader-election-moderate" class="headerlink" title="Part 3A: leader election (moderate)"></a>Part 3A: leader election (moderate)</h3><p>简介：</p>
+<h2 id="Part-3A-leader-election-moderate"><a href="#Part-3A-leader-election-moderate" class="headerlink" title="Part 3A: leader election (moderate)"></a>Part 3A: leader election (moderate)</h2><p>简介：</p>
 <blockquote>
 <p>Implement Raft <strong>leader election</strong> and <strong>heartbeats</strong> (AppendEntries RPCs with no log entries). The goal for Part 3A is for a single leader to be elected, for the leader to remain the leader if there are no failures, and for a new leader to take over if the old leader fails or if packets to/from the old leader are lost. Run go test -run 3A to test your 3A code.</p>
 </blockquote>
@@ -307,7 +270,7 @@
 <li>leader心跳机制</li>
 <li>选举机制</li>
 </ol>
-<h5 id="1-结构体定义"><a href="#1-结构体定义" class="headerlink" title="1.结构体定义"></a>1.结构体定义</h5><p>很多定义的东西我们还暂时用不上，但是提前按照论文说的定义好准没错</p>
+<h3 id="结构体定义"><a href="#结构体定义" class="headerlink" title="结构体定义"></a>结构体定义</h3><p>很多定义的东西我们还暂时用不上，但是提前按照论文说的定义好准没错</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> Raft <span class="token keyword">struct</span> <span class="token punctuation">{</span>
 	mu        sync<span class="token punctuation">.</span>Mutex          <span class="token comment">// Lock to protect shared access to this peer's state</span>
 	peers     <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>labrpc<span class="token punctuation">.</span>ClientEnd <span class="token comment">// RPC end points of all peers</span>
@@ -345,7 +308,6 @@
 <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 
-
 <p>心跳包结构的定义</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> AppendEntriesArgs <span class="token keyword">struct</span> <span class="token punctuation">{</span>
 	Term         <span class="token builtin">int</span> 		<span class="token comment">//leader任期</span>
@@ -357,7 +319,7 @@
 	Success       <span class="token builtin">bool</span> <span class="token comment">//是否接受了心跳包的附带日志</span>
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h5 id="2-选举机制"><a href="#2-选举机制" class="headerlink" title="2.选举机制"></a>2.<strong>选举机制</strong></h5><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> RequestVoteArgs <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+<h3 id="选举机制"><a href="#选举机制" class="headerlink" title="选举机制"></a>选举机制</h3><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> RequestVoteArgs <span class="token keyword">struct</span> <span class="token punctuation">{</span>
 	<span class="token comment">// Your data here (3A, 3B).</span>
 	Term         <span class="token builtin">int</span>
 	CandidateId  <span class="token builtin">int</span>
@@ -394,7 +356,7 @@
 <p>为什么需要在第6步检查自己是不是candidate？因为所有RPC的发送和响应都带有Term信息，接收方都需要对Term的值进行判断，如果投票RPC请求的响应的Term比自己大，需要将自己的状态转变为follower，更新自己的任期，清空voteFor。</p>
 <p>如果状态转变为follower，其他所有流程（candidate选举流程，leader发送心跳）都要立刻中断，这就是使用大循环的好处，可以随时使用continue中断当前流程。如果使用各种函数嵌套实现流程，会导致消息传递很复杂，极其容易出错。</p>
 <p>本人就因为这一点吃过苦</p>
-<h4 id="3-心跳机制"><a href="#3-心跳机制" class="headerlink" title="3.心跳机制"></a>3.心跳机制</h4><p>leader当选后定时发送心跳包给其他follower或candidate</p>
+<h3 id="心跳机制"><a href="#心跳机制" class="headerlink" title="心跳机制"></a>心跳机制</h3><p>leader当选后定时发送心跳包给其他follower或candidate</p>
 <p>由于lab1只需要实现无日志的领导人选举，所以心跳包的参数只需要有Term和LeaderId就够了</p>
 <p>主要思路是使用for大循环，检测自己是否为leader，是则进行心跳包发送判断</p>
 <p>检查上次发送心跳包的时间距离当前时间的值，如果超过了规定的心跳包发送间隔就进行一次心跳包的发送</p>
@@ -458,7 +420,7 @@
 <p>初次实验可能会出现测试通过了，但测试却警告：“在没有网络崩溃的情况下发生了选举”</p>
 <p>这说明一定有哪个流程没有被正确实现，比较常见的错误是收到心跳的时候没有正确更新定时器</p>
 <hr>
-<h3 id="Part-3B-log-hard"><a href="#Part-3B-log-hard" class="headerlink" title="Part 3B: log (hard)"></a>Part 3B: log (hard)</h3><p>在这一节开始关于锁的使用就需要重视了，不停使用大锁把每个函数锁起来确实可以很大一部分并发带来的问题，但是效率也是低下的，最好在考虑并发安全的同时尽可能缩小锁的范围。</p>
+<h2 id="Part-3B-log-hard"><a href="#Part-3B-log-hard" class="headerlink" title="Part 3B: log (hard)"></a>Part 3B: log (hard)</h2><p>在这一节开始关于锁的使用就需要重视了，不停使用大锁把每个函数锁起来确实可以很大一部分并发带来的问题，但是效率也是低下的，最好在考虑并发安全的同时尽可能缩小锁的范围。</p>
 <p>照例看Hint</p>
 <blockquote>
 <p>You will need to implement the election restriction (section 5.4.1 in the paper).</p>
@@ -490,7 +452,7 @@
 <p>注意细节</p>
 <p>1：rf.votedFor == -1的判断，一个任期内，follower只能投一张赞成票，这保证了一个任期内只会合法产生一个leader。</p>
 <p>2：rf.votedFor == args.CandidateId 这个判断是我在debug之旅做出的尝试，逻辑上并没有问题，follower发出的赞成票可能因为网络丢包导致candidate没收到这张票，那么follower再次收到同一个candidate的投票请求时，既然已经投给它了那么再投一次也无妨。但实际上candidate在一个任期内只会向一个服务器发送一次投票RPC，何来重复一说…但既然留着没问题，我也不删了</p>
-<h4 id="日志复制"><a href="#日志复制" class="headerlink" title="日志复制"></a>日志复制</h4><p>修改心跳包相关代码</p>
+<h3 id="日志复制"><a href="#日志复制" class="headerlink" title="日志复制"></a>日志复制</h3><p>修改心跳包相关代码</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">type</span> AppendEntriesArgs <span class="token keyword">struct</span> <span class="token punctuation">{</span>
 	Term         <span class="token builtin">int</span> <span class="token comment">//leader任期</span>
 	LeaderId     <span class="token builtin">int</span> <span class="token comment">//leaderId</span>
@@ -570,8 +532,7 @@ matchIndex <span class="token punctuation">[</span><span class="token punctuatio
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>然后leader就可以开始根据nextIndex的值发送日志了</p>
-<p><strong>leader日志发送</strong></p>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token operator">*</span>args <span class="token operator">=</span> AppendEntriesArgs<span class="token punctuation">{</span>
+<h4 id="leader日志发送"><a href="#leader日志发送" class="headerlink" title="leader日志发送"></a>leader日志发送</h4><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token operator">*</span>args <span class="token operator">=</span> AppendEntriesArgs<span class="token punctuation">{</span>
 	Term<span class="token punctuation">:</span>         rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span>
 	LeaderId<span class="token punctuation">:</span>     rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span>
 	PrevLogIndex<span class="token punctuation">:</span> rf<span class="token punctuation">.</span>nextIndex<span class="token punctuation">[</span>server<span class="token punctuation">]</span> <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">,</span>
@@ -623,8 +584,7 @@ matchIndex <span class="token punctuation">[</span><span class="token punctuatio
 <span class="token punctuation">}</span>
 rf<span class="token punctuation">.</span><span class="token function">CopyEntries</span><span class="token punctuation">(</span>args<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>日志复制</p>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>rf <span class="token operator">*</span>Raft<span class="token punctuation">)</span> <span class="token function">CopyEntries</span><span class="token punctuation">(</span>args <span class="token operator">*</span>AppendEntriesArgs<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<h4 id="follower日志复制"><a href="#follower日志复制" class="headerlink" title="follower日志复制"></a>follower日志复制</h4><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>rf <span class="token operator">*</span>Raft<span class="token punctuation">)</span> <span class="token function">CopyEntries</span><span class="token punctuation">(</span>args <span class="token operator">*</span>AppendEntriesArgs<span class="token punctuation">)</span> <span class="token punctuation">{</span>
 	logchange <span class="token operator">:=</span> <span class="token boolean">false</span>
 	<span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>args<span class="token punctuation">.</span>Entries<span class="token punctuation">)</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">{</span>
 		rfIndex <span class="token operator">:=</span> i <span class="token operator">+</span> args<span class="token punctuation">.</span>PrevLogIndex <span class="token operator">+</span> <span class="token number">1</span>
@@ -717,7 +677,7 @@ rf<span class="token punctuation">.</span><span class="token function">CopyEntri
 <p>Upon receiving a conflict response, the leader should first search its log for conflictTerm. If it finds an entry in its log with that term, it should set nextIndex to be the one beyond the index of the last entry in that term in its log.</p>
 <p>If it does not find an entry with that term, it should set nextIndex = conflictIndex.</p>
 </blockquote>
-<p>日志快速回退的代码实现</p>
+<h4 id="日志快速回退"><a href="#日志快速回退" class="headerlink" title="日志快速回退"></a>日志快速回退</h4><p>代码实现</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go">ok <span class="token operator">:=</span> rf<span class="token punctuation">.</span>peers<span class="token punctuation">[</span>server<span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">Call</span><span class="token punctuation">(</span><span class="token string">"Raft.AppendEntries"</span><span class="token punctuation">,</span> args<span class="token punctuation">,</span> reply<span class="token punctuation">)</span>
 
 rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
@@ -763,7 +723,7 @@ rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</s
 <span class="token punctuation">}</span>
 <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h4 id="日志提交"><a href="#日志提交" class="headerlink" title="日志提交"></a>日志提交</h4><p>每一个服务器follower，candidat，leader都需要将LastApplied到commitIndex之间的日志通过applych提交给上层应用</p>
+<h3 id="日志提交"><a href="#日志提交" class="headerlink" title="日志提交"></a>日志提交</h3><p>每一个服务器follower，candidat，leader都需要将LastApplied到commitIndex之间的日志通过applych提交给上层应用</p>
 <blockquote>
 <p>lastapplied和commitIndex不是易失性状态吗？</p>
 </blockquote>
@@ -865,14 +825,14 @@ rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</s
 
 <p>需要密切关注的细节是：<br>if N &gt; rf.commitIndex &amp;&amp; (N &lt;= rf.lastIncludeIndex || <strong>rf.currentTerm == rf.log[rf.index2LogPos(N)].Term</strong>)</p>
 <p>论文中有提到</p>
-<p><img src="/12.png" alt="图片"></p>
+<p><img src="/2024/04/04/mit65840lab3shixian/12.png" alt="图片"></p>
 <p>commitIndex将要被更新到的N这个值，其Term必须等于leader的currentTerm，否则就不能进行更新。</p>
 <p>这是因为领导人不可以直接提交以前任期的日志，只有领导人自己发出去的日志被多数follower应用之后，他才可以将CommitIndex更新到这个任期跟自己匹配的新的index，否则会发生数据错乱问题。</p>
 <p>这里贴上中文解释</p>
-<p><img src="/14.png" alt="图片"></p>
+<p><img src="/2024/04/04/mit65840lab3shixian/14.png" alt="图片"></p>
 <p>这是个比较隐秘的规则，很容易被忽略从而导致数据错乱</p>
 <hr>
-<h3 id="Part-3C-persistence-hard"><a href="#Part-3C-persistence-hard" class="headerlink" title="Part 3C: persistence (hard)"></a>Part 3C: persistence (hard)</h3><p>本次实验的代码量最少，阅读官方实验指导，它明确道在每一个持久化成员发生改变的时候调用persist（）函数进行持久化即可。</p>
+<h2 id="Part-3C-persistence-hard"><a href="#Part-3C-persistence-hard" class="headerlink" title="Part 3C: persistence (hard)"></a>Part 3C: persistence (hard)</h2><p>本次实验的代码量最少，阅读官方实验指导，它明确道在每一个持久化成员发生改变的时候调用persist（）函数进行持久化即可。</p>
 <p>所谓持久化就是将数据读到硬盘，服务器崩溃后能从硬盘中读取到最近一次持久化的数据。</p>
 <p>代码实现简单，但它确实是卡我（相信也是大多数人）最久的Part，原因无它，测试代码太变态了</p>
 <p>而即使是如此变态的Test环境，仍然无法完全测出关于raft算法的bug，这也是多线程编程的一大特点，raft算法本身再完备，经程序员实现一手后又大不一样了</p>
@@ -882,10 +842,10 @@ rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</s
 <p>二是函数嵌套太多，导致最外层的函数很难根据内层函数的结果进行响应，比如内层函数本意是想要终止最外层函数的整个操作，于是它进行了return，但是只return了自己这一层，外层循环还在继续</p>
 <p>假设leader的Term比接收者低，但是它刚从网络中隔离了所以不知道，继续发送带有旧Term的RPC，由于leader并行发送多个带有条目的RPC，但不是真的并行，所以发送前面的RPC中，leader如果在一个心跳RPC的响应中，发现接收者的任期比自己高，于是更新自己的任期，并转变为follower，但是此时心跳发送流程并没有立刻被停止，后面还在不停的发送RPC，并且由于已经更新到了新任期，后面这些RPC就真的被接收者采用了，从而导致数据错乱</p>
 <p>本次实验需要较长时间进行debug，爱护眼睛，写好详细的log信息，祝各位debug愉快</p>
-<h3 id="Part-3D-log-compaction-hard"><a href="#Part-3D-log-compaction-hard" class="headerlink" title="Part 3D: log compaction (hard)"></a>Part 3D: log compaction (hard)</h3><p>3D要求实现快照机制，由于不止leader可以进行快照，follower同样可以自行备份快照。</p>
+<h2 id="Part-3D-log-compaction-hard"><a href="#Part-3D-log-compaction-hard" class="headerlink" title="Part 3D: log compaction (hard)"></a>Part 3D: log compaction (hard)</h2><p>3D要求实现快照机制，由于不止leader可以进行快照，follower同样可以自行备份快照。</p>
 <p>关于心跳机制中日志复制的部分，还有leader和follower交互这部分要进行大改。</p>
 <p>建议每改动一处地方就马上再去测一遍ABC的测试，否则后续再debug不堪设想</p>
-<h4 id="快照流程"><a href="#快照流程" class="headerlink" title="快照流程"></a>快照流程</h4><p>前面的实验中，leader通过applych将被应用的日志发送给应用层（上层，也就是我们lab4需要实现的kvRaft中的kvserver层）</p>
+<h3 id="快照流程"><a href="#快照流程" class="headerlink" title="快照流程"></a>快照流程</h3><p>前面的实验中，leader通过applych将被应用的日志发送给应用层（上层，也就是我们lab4需要实现的kvRaft中的kvserver层）</p>
 <p>上层实际上并没有一比一保存这些log，上层要做的是读取log中的操作信息，将其中的put，append等操作应用到数据库里，既然是数据库，肯定包含了很多对同一个键值对的操作，这些操作是可以压缩的</p>
 <p>假设一个例子：</p>
 <blockquote>
@@ -897,7 +857,7 @@ rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</s
 </blockquote>
 <p>这就是快照机制,减少raft层在内存和硬盘中保存的log数量，加快重启后应用层(上层数据库)恢复数据库的速度</p>
 <p>由上层调用的Snapshot（）函数：</p>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>rf <span class="token operator">*</span>Raft<span class="token punctuation">)</span> <span class="token function">Snapshot</span><span class="token punctuation">(</span>index <span class="token builtin">int</span><span class="token punctuation">,</span> snapshot <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">byte</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<h4 id="leader主动快照"><a href="#leader主动快照" class="headerlink" title="leader主动快照"></a>leader主动快照</h4><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>rf <span class="token operator">*</span>Raft<span class="token punctuation">)</span> <span class="token function">Snapshot</span><span class="token punctuation">(</span>index <span class="token builtin">int</span><span class="token punctuation">,</span> snapshot <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">byte</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
 	<span class="token comment">// Your code here (3D).</span>
 	<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"SNAPS Term[%d] [%d] 📷Snapshot ask to snap Index[%d] Raft log Len:[%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> index<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>rf<span class="token punctuation">.</span>log<span class="token punctuation">)</span><span class="token punctuation">)</span>
 	rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
@@ -927,8 +887,7 @@ rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</s
 <p>在之前的实验中，实验指导给第二个参数赋值nil，但是在lab3D中，任何一处rf.persister.Save(rf.persistWithSnapshot(), nil)都会将已保存的snapshot数据<strong>完全删掉</strong>，很坑，非常坑</p>
 <p>因为快照机制，leader会将index前的所有log删干净，那如果发生日志回退了，nextIndex一直回退到等于log42及之前怎么办呢</p>
 <p>在这种情况，根据论文，我们需要leader主动将自己的快照发送过去，覆盖掉这个落后followr的快照，然后leader对于这个follower的matchIndex至少也是42了，后续再发生日志回退，也不可能回退到42，因为发送过快照的缘故两者之间的日志在42处一定是匹配的</p>
-<p>leader发送快照：</p>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>rf <span class="token operator">*</span>Raft<span class="token punctuation">)</span> <span class="token function">sendInstallSnapshotToPeerId</span><span class="token punctuation">(</span>server <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<h4 id="leader发送快照："><a href="#leader发送快照：" class="headerlink" title="leader发送快照："></a>leader发送快照：</h4><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>rf <span class="token operator">*</span>Raft<span class="token punctuation">)</span> <span class="token function">sendInstallSnapshotToPeerId</span><span class="token punctuation">(</span>server <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
 	<span class="token comment">// DPrintf("SNAPS Term[%d] [%d] goSend📷Wait for a lock🤨 to [%d],", rf.currentTerm, rf.me, server)</span>
 	rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 	args <span class="token operator">:=</span> <span class="token operator">&amp;</span>SnapshotInstallArgs<span class="token punctuation">{</span><span class="token punctuation">}</span>
@@ -962,8 +921,7 @@ rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</s
 	<span class="token punctuation">}</span><span class="token punctuation">(</span>args<span class="token punctuation">)</span>
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>follower接受快照：</p>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>rf <span class="token operator">*</span>Raft<span class="token punctuation">)</span> <span class="token function">InstallSnapshot</span><span class="token punctuation">(</span>args <span class="token operator">*</span>SnapshotInstallArgs<span class="token punctuation">,</span> reply <span class="token operator">*</span>SnapshotInstallreplys<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<h4 id="follower接受快照："><a href="#follower接受快照：" class="headerlink" title="follower接受快照："></a>follower接受快照：</h4><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>rf <span class="token operator">*</span>Raft<span class="token punctuation">)</span> <span class="token function">InstallSnapshot</span><span class="token punctuation">(</span>args <span class="token operator">*</span>SnapshotInstallArgs<span class="token punctuation">,</span> reply <span class="token operator">*</span>SnapshotInstallreplys<span class="token punctuation">)</span> <span class="token punctuation">{</span>
 	rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 	<span class="token keyword">defer</span> rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 	<span class="token function">DPrintf</span><span class="token punctuation">(</span><span class="token string">"SNAPS Term[%d] [%d] Receiv📷 from[%d] lastIncludeIndex[%d] lastIncludeTerm[%d]"</span><span class="token punctuation">,</span> rf<span class="token punctuation">.</span>currentTerm<span class="token punctuation">,</span> rf<span class="token punctuation">.</span>me<span class="token punctuation">,</span> args<span class="token punctuation">.</span>LeaderId<span class="token punctuation">,</span> args<span class="token punctuation">.</span>LastIncludeIndex<span class="token punctuation">,</span> args<span class="token punctuation">.</span>LastIncludeTerm<span class="token punctuation">)</span>
@@ -1037,216 +995,90 @@ rf<span class="token punctuation">.</span>mu<span class="token punctuation">.</s
 
 <p>由于日志会因为快照被删除，所以log在logs数组中的位置发生了错误，具体来说：realPos = index - lastIncludeIndex - 1</p>
 <p>这就是我实现Lab3 Raft的主要思路了，实际实现的时候还有很多其他细节需要考虑，留给读者自行体验了</p>
-<p><img src="/8.png" alt="测试图"></p>
+<p><img src="/2024/04/04/mit65840lab3shixian/8.png" alt="测试图"></p>
 <p><img src="/15.png" alt="多次测试图"></p>
 
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/MIT6-5840/" rel="tag"># MIT6.5840</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2024/04/04/mit65840lab2shixian/" rel="prev" title="MIT6.5840 Lab2 实现">
+                  <i class="fa fa-angle-left"></i> MIT6.5840 Lab2 实现
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2024/04/05/mit65840lab4shixian/" rel="next" title="MIT6.5840 Lab4 Get无日志实现">
+                  MIT6.5840 Lab4 Get无日志实现 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
   </article>
-  <!-- tag -->
-  <div class="mt-12 pt-6 border-t border-gray-200">
-    
-      
-        <span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 m-1 text-sm rounded-md transition-colors hover:bg-gray-200">
-          <a href="/tags/MIT6-5840/">MIT6.5840</a>
-        </span>
-      
-    
-  </div>
-  <!-- prev and next -->
-  <div class="flex justify-between mt-12 pt-6 border-t border-gray-200">
-    <div>
-      
-        <a href="/2024/04/05/mit65840lab4shixian/" class="text-sm text-gray-400 hover:text-gray-500 flex justify-center">
-          <iconify-icon width="20" icon="ri:arrow-left-s-line" data-inline="false"></iconify-icon>
-          MIT6.5840 Lab4 Get无日志实现
-        </a>
-      
-    </div>
-    <div>
-      
-        <a href="/2024/04/04/mit65840lab2shixian/" class="text-sm text-gray-400 hover:text-gray-500 flex justify-center">
-          MIT6.5840 Lab2 实现
-          <iconify-icon width="20" icon="ri:arrow-right-s-line" data-inline="false"></iconify-icon>
-        </a>
-      
-    </div>
-  </div>
-  <!-- comment -->
-  <div class="article-comments mt-12">
-    
-
-  </div>
-</section>
-<!-- js inspect -->
-
-<script src="/lib/clipboard.min.js"></script>
-
-
-<script async src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Config({
-    "HTML-CSS": {
-        preferredFont: "TeX",
-        availableFonts: ["STIX","TeX"],
-        linebreaks: { automatic:true },
-        EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
-    },
-    tex2jax: {
-        inlineMath: [ ["$", "$"], ["\\(","\\)"] ],
-        processEscapes: true,
-        ignoreClass: "tex2jax_ignore|dno",
-        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-    },
-    TeX: {
-        equationNumbers: { autoNumber: "AMS" },
-        noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } },
-        Macros: { href: "{}" }
-    },
-    messageStyle: "none"
-  });
-</script>
-<script type="text/x-mathjax-config">
-  MathJax.Hub.Queue(function() {
-      var all = MathJax.Hub.getAllJax(), i;
-      for (i=0; i < all.length; i += 1) {
-          all[i].SourceElement().parentNode.className += ' has-jax';
-      }
-  });
-</script>
-
-
-
-<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-<script>
-  $(document).ready(() => {
-    const maraidConfig = {
-      theme: "default",
-      logLevel: 3,
-      flowchart: { curve: "linear" },
-      gantt: { axisFormat: "%m/%d/%Y" },
-      sequence: { actorMargin: 50 },
-    };
-    mermaid.initialize(maraidConfig);
-  });
-</script>
-
-
-
-<script src="/lib/fancybox/fancybox.umd.min.js"></script>
-
-<script>
-  $(document).ready(() => {
-    $('.post-content').each(function(i){
-      $(this).find('img').each(function(){
-        if ($(this).parent().hasClass('fancybox') || $(this).parent().is('a')) return;
-        var alt = this.alt;
-        if (alt) $(this).after('<span class="fancybox-alt">' + alt + '</span>');
-        $(this).wrap('<a class="fancybox-img" href="' + this.src + '" data-fancybox=\"gallery\" data-caption="' + alt + '"></a>')
-      });
-      $(this).find('.fancybox').each(function(){
-        $(this).attr('rel', 'article' + i);
-      });
-    });
-
-    Fancybox.bind('[data-fancybox="gallery"]', {
-        // options
-    })
-  })
-</script>
-
-<!-- tocbot begin -->
-
-<script src="/lib/tocbot/tocbot.min.js"></script>
-
-<script>
-  $(document).ready(() => {
-      tocbot.init({
-        // Where to render the table of contents.
-        tocSelector: '.post-toc',
-        // Where to grab the headings to build the table of contents.
-        contentSelector: '.post-content',
-        // Which headings to grab inside of the contentSelector element.
-        headingSelector: 'h1, h2, h3',
-        // For headings inside relative or absolute positioned containers within content.
-        hasInnerContainers: true,
-    });
-  })
-</script>
-<!-- tocbot end -->
-
-
-  </main>
-  <footer class="flex flex-col h-40 items-center justify-center text-gray-400 text-sm">
-  <!-- busuanzi -->
-  
-<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-<!-- Busuanzi Analytics -->
-<div class="flex items-center gap-2">
-  <span>Visitors</span>
-  <span id="busuanzi_value_site_uv"></span>
-  <span>Page Views</span>
-  <span id="busuanzi_value_site_pv"></span>
 </div>
-<!-- End Busuanzi Analytics -->
 
 
-  <!-- copyright -->
-  <div class="flex items-center gap-2">
-    <a target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" style="color: inherit;">CC BY-NC-SA 4.0</a>
-    <span>© 2022</span>
-    <iconify-icon width="18" icon="emojione-monotone:maple-leaf" ></iconify-icon>
-    <a href="https://github.com/xbmlz" target="_blank" rel="noopener noreferrer">xbmlz</a>
-  </div>
-  <!-- powered by -->
-  <div class="flex items-center gap-2">
-    <span>Powered by</span>
-    <a href="https://hexo.io/" target="_blank" rel="noopener noreferrer">Hexo</a>
-    <span>&</span>
-    <a href="https://github.com/xbmlz/hexo-theme-maple" target="_blank" rel="noopener noreferrer">Maple</a>
-  </div>
 
-</footer>
 
-  <div class="back-to-top box-border fixed right-6 z-1024 -bottom-20 rounded py-1 px-1 bg-slate-900 opacity-60 text-white cursor-pointer text-center dark:bg-slate-600">
-    <span class="flex justify-center items-center text-sm">
-      <iconify-icon width="18" icon="ion:arrow-up-c" id="go-top"></iconify-icon>
-      <span id="scrollpercent"><span>0</span> %</span>
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2024</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
     </span>
+    <span class="author" itemprop="copyrightHolder">Xiur</span>
   </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
   
-<script src="/js/main.js"></script>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
 
 
-  <script>
-    $(document).ready(function () {
-      const mapleCount = "10";
-      const speed = "0.5";
-      const mapleEl = document.getElementById("maple");
-      const maples = Array.from({ length: mapleCount }).map(() => {
-        const maple = document.createElement("div");
-        const scale = Math.random() * 0.5 + 0.5;
-        const offset = Math.random() * 2 - 1;
-        const x = Math.random() * mapleEl.clientWidth;
-        const y = -Math.random() * mapleEl.clientHeight;
-        const duration = 10 / speed;
-        const delay = -duration;
-        maple.className = "maple";
-        maple.style.width = `${24 * scale}px`;
-        maple.style.height = `${24 * scale}px`;
-        maple.style.left = `${x}px`;
-        maple.style.top = `${y}px`;
-        maple.style.setProperty("--maple-fall-offset", offset);
-        maple.style.setProperty("--maple-fall-height", `${Math.abs(y) + mapleEl.clientHeight}px`);
-        maple.style.animation = `fall ${duration}s linear infinite`;
-        maple.style.animationDelay = `${delay}s`;
-        mapleEl.appendChild(maple)
-        return maple
-      })
-    });
-  </script>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
   
 
 
-  <div class="fixed top-0 bottom-0 left-0 right-0 pointer-events-none print:hidden" id="maple"></div>
+
+
+
+
+  
+
+
+
+
+
 </body>
-
 </html>

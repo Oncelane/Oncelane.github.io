@@ -2,421 +2,804 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.1.1">
 
-
-
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-<meta http-equiv="X-UA-Compatible" content="ie=edge">
-
-  <meta name="author" content="Xiur">
-
-
-  <meta name="subtitle" content="闲来记事">
-
-
-  <meta name="description" content="已巷的个人小站">
-
-
-
-<title>Oncelane</title>
-
-
-
-<link rel="icon" href="/favicon.png">
-
-
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
 
 <link rel="stylesheet" href="/css/main.css">
 
 
-<link rel="stylesheet" href="/lib/nprogress/nprogress.css">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha256-wiz7ZSCn/btzhjKDQBms9Hx4sSeUYsDrTLg7roPstac=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"oncelane.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.19.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="已巷的个人小站">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Oncelane">
+<meta property="og:url" content="https://oncelane.github.io/index.html">
+<meta property="og:site_name" content="Oncelane">
+<meta property="og:description" content="已巷的个人小站">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:author" content="Xiur">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://oncelane.github.io/">
 
 
 
-<script src="/lib/jquery.min.js"></script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":true,"isPost":false,"lang":"zh-CN","comments":"","permalink":"","path":"index.html","title":""}</script>
 
-
-<script src="/lib/iconify-icon.min.js"></script>
-
-
-<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
-<script>
-  tailwind.config = {
-    darkMode: "class",
-  };
-</script>
-
-
-<script src="/lib/nprogress/nprogress.js"></script>
-
-<script>
-  $(document).ready(() => {
-    NProgress.configure({
-      showSpinner: false,
-    });
-    NProgress.start();
-    $("#nprogress .bar").css({
-      background: "#de7441",
-    });
-    $("#nprogress .peg").css({
-      "box-shadow": "0 0 2px #de7441, 0 0 4px #de7441",
-    });
-    $("#nprogress .spinner-icon").css({
-      "border-top-color": "#de7441",
-      "border-left-color": "#de7441",
-    });
-    setTimeout(function () {
-      NProgress.done();
-      $(".fade").removeClass("out");
-    }, 800);
-  });
-</script>
-
-<script>
-  (function () {
-    const prefersDark =
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const setting = localStorage.getItem("hexo-color-scheme") || "auto";
-    if (setting === "dark" || (prefersDark && setting !== "light"))
-      document.documentElement.classList.toggle("dark", true);
-    let isDark = document.documentElement.classList.contains("dark");
-  })();
-
-  $(document).ready(function () {
-    // init icon
-    const prefersDark =
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const isDark = document.documentElement.classList.contains("dark");
-    $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
-
-    function toggleGiscusTheme() {
-      const isDark = document.documentElement.classList.contains("dark");
-      const giscusFrame = document.querySelector("iframe.giscus-frame");
-      if (giscusFrame) {
-        giscusFrame.contentWindow.postMessage(
-          {
-            giscus: {
-              setConfig: {
-                theme: isDark ? "dark" : "light",
-              },
-            },
-          },
-          "https://giscus.app"
-        );
-      }
-    }
-
-
-    // toggle dark mode
-    function toggleDark() {
-      let isDark = document.documentElement.classList.contains("dark");
-      const setting = localStorage.getItem("hexo-color-scheme") || "auto";
-      isDark = !isDark;
-      document.documentElement.classList.toggle("dark", isDark);
-      $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
-      if (prefersDark === isDark) {
-        localStorage.setItem("hexo-color-scheme", "auto");
-      } else {
-        localStorage.setItem("hexo-color-scheme", isDark ? "dark" : "light");
-      }
-      toggleGiscusTheme();
-    }
-    $("#toggle-dark").click(toggleDark);
-
-    // listen dark mode change
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", (e) => {
-        const setting = localStorage.getItem("hexo-color-scheme") || "auto";
-        if (setting === "auto") {
-          document.documentElement.classList.toggle("dark", e.matches);
-          $("#theme-icon").attr(
-            "icon",
-            e.matches ? "ri:moon-line" : "ri:sun-line"
-          );
-          toggleGiscusTheme();
-        }
-      });
-  });
-</script>
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Oncelane</title>
+  
 
 
 
 
-<meta name="generator" content="Hexo 7.0.0">
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+
 <style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
 </head>
-<body class="font-sans bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-200 relative">
-  <header class="fixed w-full px-5 py-1 z-10 backdrop-blur-xl backdrop-saturate-150 border-b border-black/5">
-  <div class="max-auto">
-    <nav class="flex items-center text-base">
-      <a href="/" class="group">
-        <h2 class="font-medium tracking-tighterp text-l p-2">
-          <img class="w-5 mr-2 inline-block transition-transform group-hover:rotate-[30deg]" id="logo" src="/images/logo.svg" alt="Oncelane" />
-          Oncelane
-        </h2>
-      </a>
-      <div id="header-title" class="opacity-0 md:ml-2 md:mt-[0.1rem] text-xs font-medium whitespace-nowrap overflow-hidden overflow-ellipsis">
-        
-      </div>
-      <div class="flex-1"></div>
-      <div class="flex items-center gap-3">
-        
-          <a class="hidden sm:flex" href="/archives">Posts</a>
-        
-        
-          
-            <a class="w-5 h-5 hidden sm:flex" title="Github" target="_blank" rel="noopener" href="https://github.com/xbmlz">
-              <iconify-icon width="20" icon="ri:github-line"></iconify-icon>
-            </a>
-          
-        
-        <a class="w-5 h-5 hidden sm:flex" title="Github" href="rss2.xml">
-          <iconify-icon width="20" icon="ri:rss-line"></iconify-icon>
-        </a>
-        <a class="w-5 h-5" title="toggle theme" id="toggle-dark">
-          <iconify-icon width="20" icon="" id="theme-icon"></iconify-icon>
-        </a>
-      </div>
-      <div class="flex items-center justify-center gap-3 ml-3 sm:hidden">
-        <span class="w-5 h-5" aria-hidden="true" role="img" id="open-menu">
-          <iconify-icon width="20" icon="carbon:menu" ></iconify-icon>
-        </span>
-        <span class="w-5 h-5 hidden" aria-hidden="true" role="img" id="close-menu">
-          <iconify-icon  width="20" icon="carbon:close" ></iconify-icon>
-        </span>
-      </div>
-    </nav>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+    </div>
   </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Oncelane</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">闲来记事</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
 </header>
-<div id="menu-panel" class="h-0 overflow-hidden sm:hidden fixed left-0 right-0 top-12 bottom-0 z-10">
-  <div id="menu-content" class="relative z-20 bg-white/80 px-6 sm:px-8 py-2 backdrop-blur-xl -translate-y-full transition-transform duration-300">
-    <ul class="nav flex flex-col sm:flex-row text-sm font-medium">
-      
-        <li class="nav-portfolio sm:mx-2 border-b sm:border-0 border-black/5 last:border-0 hover:text-main">
-          <a href="/archives" class="flex h-12 sm:h-auto items-center">Posts</a>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-overview-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
         </li>
-      
-    </ul>
-  </div>
-  <div class="mask bg-black/20 absolute inset-0"></div>
-</div>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
 
-  <main class="pt-14">
-    <section class="px-6 max-w-prose mx-auto gap-12 grid grid-cols-1">
-  <div class="flex flex-col h-48 items-center justify-center">
-    <h1 class="site-title text-4xl leading-relaxed">
-      Oncelane
-    </h1>
-    <p class="text-gray-500 mt-2">
-      闲来记事
-    </p>
-  </div>
-  
-  
-    
-    
-      <div class="relative pointer-events-none">
-        <span class="text-9xl opacity-10 absolute -left-11 -top-6 font-bold">2024</span>
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Xiur</p>
+  <div class="site-description" itemprop="description">已巷的个人小站</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
       </div>
-    
-    <a style="--stagger:0" href="/2024/04/05/mit65840lab4shixian/" data-animate>
-      <header>
-        <h2 class="font-bold text-xl">
-          MIT6.5840 Lab4 Get无日志实现
-        </h2>
-      </header>
-      <section class="text-gray-400 my-2 text-sm time">
-        <p class="line-clamp-4">
-          
-        </p>
-        <p class="line-clamp-4">
-          4月 05
-          ·
-          20 min
-        </p>
-      </section>
-    </a>
-  
-    
-    
-    <a style="--stagger:1" href="/2024/04/04/mit65840lab3shixian/" data-animate>
-      <header>
-        <h2 class="font-bold text-xl">
-          MIT6.5840 Lab3 实现
-        </h2>
-      </header>
-      <section class="text-gray-400 my-2 text-sm time">
-        <p class="line-clamp-4">
-          
-        </p>
-        <p class="line-clamp-4">
-          4月 04
-          ·
-          40 min
-        </p>
-      </section>
-    </a>
-  
-    
-    
-    <a style="--stagger:2" href="/2024/04/04/mit65840lab2shixian/" data-animate>
-      <header>
-        <h2 class="font-bold text-xl">
-          MIT6.5840 Lab2 实现
-        </h2>
-      </header>
-      <section class="text-gray-400 my-2 text-sm time">
-        <p class="line-clamp-4">
-          
-        </p>
-        <p class="line-clamp-4">
-          4月 04
-          ·
-          8 min
-        </p>
-      </section>
-    </a>
-  
-    
-    
-    <a style="--stagger:3" href="/2024/04/03/mit65840lab1shixian/" data-animate>
-      <header>
-        <h2 class="font-bold text-xl">
-          MIT6.5840 Lab1 实现
-        </h2>
-      </header>
-      <section class="text-gray-400 my-2 text-sm time">
-        <p class="line-clamp-4">
-          
-        </p>
-        <p class="line-clamp-4">
-          4月 03
-          ·
-          21 min
-        </p>
-      </section>
-    </a>
-  
-    
-    
-    <a style="--stagger:4" href="/2024/03/16/gerendajianbokejiaochengpart2/" data-animate>
-      <header>
-        <h2 class="font-bold text-xl">
-          个人搭建博客教程-part2
-        </h2>
-      </header>
-      <section class="text-gray-400 my-2 text-sm time">
-        <p class="line-clamp-4">
-          
-        </p>
-        <p class="line-clamp-4">
-          3月 16
-          ·
-          5 min
-        </p>
-      </section>
-    </a>
-  
-    
-    
-    <a style="--stagger:5" href="/2024/03/13/gerenbokedajianjiaocheng/" data-animate>
-      <header>
-        <h2 class="font-bold text-xl">
-          个人博客搭建教程
-        </h2>
-      </header>
-      <section class="text-gray-400 my-2 text-sm time">
-        <p class="line-clamp-4">
-          
-        </p>
-        <p class="line-clamp-4">
-          3月 13
-          ·
-          2 min
-        </p>
-      </section>
-    </a>
-  
-</section>
-
-
-  </main>
-  <footer class="flex flex-col h-40 items-center justify-center text-gray-400 text-sm">
-  <!-- busuanzi -->
-  
-<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-<!-- Busuanzi Analytics -->
-<div class="flex items-center gap-2">
-  <span>Visitors</span>
-  <span id="busuanzi_value_site_uv"></span>
-  <span>Page Views</span>
-  <span id="busuanzi_value_site_pv"></span>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
 </div>
-<!-- End Busuanzi Analytics -->
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
 
 
-  <!-- copyright -->
-  <div class="flex items-center gap-2">
-    <a target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" style="color: inherit;">CC BY-NC-SA 4.0</a>
-    <span>© 2022</span>
-    <iconify-icon width="18" icon="emojione-monotone:maple-leaf" ></iconify-icon>
-    <a href="https://github.com/xbmlz" target="_blank" rel="noopener noreferrer">xbmlz</a>
-  </div>
-  <!-- powered by -->
-  <div class="flex items-center gap-2">
-    <span>Powered by</span>
-    <a href="https://hexo.io/" target="_blank" rel="noopener noreferrer">Hexo</a>
-    <span>&</span>
-    <a href="https://github.com/xbmlz/hexo-theme-maple" target="_blank" rel="noopener noreferrer">Maple</a>
-  </div>
+    </div>
 
-</footer>
+    <div class="main-inner index posts-expand">
 
-  <div class="back-to-top box-border fixed right-6 z-1024 -bottom-20 rounded py-1 px-1 bg-slate-900 opacity-60 text-white cursor-pointer text-center dark:bg-slate-600">
-    <span class="flex justify-center items-center text-sm">
-      <iconify-icon width="18" icon="ion:arrow-up-c" id="go-top"></iconify-icon>
-      <span id="scrollpercent"><span>0</span> %</span>
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://oncelane.github.io/2024/04/05/mit65840lab4shixian/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Xiur">
     </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Oncelane">
+      <meta itemprop="description" content="已巷的个人小站">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | Oncelane">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2024/04/05/mit65840lab4shixian/" class="post-title-link" itemprop="url">MIT6.5840 Lab4 Get无日志实现</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2024-04-05 22:05:54" itemprop="dateCreated datePublished" datetime="2024-04-05T22:05:54+08:00">2024-04-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2024-04-06 10:44:46" itemprop="dateModified" datetime="2024-04-06T10:44:46+08:00">2024-04-06</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h1 id="6-5840-Lab-4-Fault-tolerant-Key-Value-Service"><a href="#6-5840-Lab-4-Fault-tolerant-Key-Value-Service" class="headerlink" title="6.5840 Lab 4: Fault-tolerant Key/Value Service"></a>6.5840 Lab 4: Fault-tolerant Key/Value Service</h1><p>本次实验需要结合Lab2实现的简易KVserver和Lab3实现的Raft算法，最后实现一个具有容错功能的分布式KVServer集群，难度较高</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/04/05/mit65840lab4shixian/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://oncelane.github.io/2024/04/04/mit65840lab3shixian/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Xiur">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Oncelane">
+      <meta itemprop="description" content="已巷的个人小站">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | Oncelane">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2024/04/04/mit65840lab3shixian/" class="post-title-link" itemprop="url">MIT6.5840 Lab3 实现</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2024-04-04 14:55:32" itemprop="dateCreated datePublished" datetime="2024-04-04T14:55:32+08:00">2024-04-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2024-04-06 10:46:47" itemprop="dateModified" datetime="2024-04-06T10:46:47+08:00">2024-04-06</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h1 id="6-5840-Lab-3-Raft"><a href="#6-5840-Lab-3-Raft" class="headerlink" title="6.5840 Lab 3: Raft"></a>6.5840 Lab 3: Raft</h1><p>本节实验的目标是实现Raft分布一致性算法，不必多说，此节为所有实验中最重要的部分，也是最能劝退实验者的一节</p>
+<p>在实验开始前一定要仔细阅读raft论文，编写代码中也要反复确认有没有正确实现论文中的规则</p>
+<p><a target="_blank" rel="noopener" href="https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf">extended Raft paper</a></p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/04/04/mit65840lab3shixian/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://oncelane.github.io/2024/04/04/mit65840lab2shixian/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Xiur">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Oncelane">
+      <meta itemprop="description" content="已巷的个人小站">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | Oncelane">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2024/04/04/mit65840lab2shixian/" class="post-title-link" itemprop="url">MIT6.5840 Lab2 实现</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2024-04-04 12:09:49" itemprop="dateCreated datePublished" datetime="2024-04-04T12:09:49+08:00">2024-04-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2024-04-06 10:52:51" itemprop="dateModified" datetime="2024-04-06T10:52:51+08:00">2024-04-06</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h1 id="6-5840-Lab-2-Key-Value-Server"><a href="#6-5840-Lab-2-Key-Value-Server" class="headerlink" title="6.5840 Lab 2: Key/Value Server"></a>6.5840 Lab 2: Key/Value Server</h1><p>此节为新增实验，比Lab 1还简单不少。主要实现一个单服务器的KV键值对数据库，在网络情况变得复杂而不可靠的情况下，仍然为客户端提供线性一致的数据库查询/修改服务</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/04/04/mit65840lab2shixian/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://oncelane.github.io/2024/04/03/mit65840lab1shixian/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Xiur">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Oncelane">
+      <meta itemprop="description" content="已巷的个人小站">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | Oncelane">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2024/04/03/mit65840lab1shixian/" class="post-title-link" itemprop="url">MIT6.5840 Lab1 实现</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2024-04-03 22:19:37" itemprop="dateCreated datePublished" datetime="2024-04-03T22:19:37+08:00">2024-04-03</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2024-04-06 10:48:51" itemprop="dateModified" datetime="2024-04-06T10:48:51+08:00">2024-04-06</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h1 id="What-is-6-5840-about"><a href="#What-is-6-5840-about" class="headerlink" title="What is 6.5840 about?"></a>What is 6.5840 about?</h1><p>MIT6.5840（原MIT6.824）是麻省理工的一门分布式系统课程，课堂上主要讲授分布式领域的论文，重点是它的实验部分，通过几个实验循序渐进，让学生最后能亲手完整实现基于Raft协议的分布式容错数据库。</p>
+<p>往年只有四个实验，今年额外增加了一个，它们分别是:</p>
+<p>实验一：实现（简单的）MapReduce分布式算法框架</p>
+<p>实验二：实现单一服务器上的容错键值对数据库</p>
+<p>实验三：实现Raft协议</p>
+<p>实验四：基于Raft协议，实现具有容错功能、强一致性的分布式KVserver集群</p>
+<p>实验五：实现分片数据库，在多个基于Raft协议的KVserver集群之间实现负载均衡，数据转移，配置更新等</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/04/03/mit65840lab1shixian/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://oncelane.github.io/2024/03/16/gerendajianbokejiaochengpart2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Xiur">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Oncelane">
+      <meta itemprop="description" content="已巷的个人小站">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | Oncelane">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2024/03/16/gerendajianbokejiaochengpart2/" class="post-title-link" itemprop="url">个人搭建博客教程-part2</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2024-03-16 20:24:01" itemprop="dateCreated datePublished" datetime="2024-03-16T20:24:01+08:00">2024-03-16</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2024-04-06 10:52:46" itemprop="dateModified" datetime="2024-04-06T10:52:46+08:00">2024-04-06</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>此Part仅做相关命令行操作的保存，方便没跟上的同学回来查找要用到的指令</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/03/16/gerendajianbokejiaochengpart2/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://oncelane.github.io/2024/03/13/gerenbokedajianjiaocheng/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Xiur">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Oncelane">
+      <meta itemprop="description" content="已巷的个人小站">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | Oncelane">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2024/03/13/gerenbokedajianjiaocheng/" class="post-title-link" itemprop="url">个人博客搭建教程</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2024-03-13 10:40:21" itemprop="dateCreated datePublished" datetime="2024-03-13T10:40:21+08:00">2024-03-13</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2024-04-06 10:49:46" itemprop="dateModified" datetime="2024-04-06T10:49:46+08:00">2024-04-06</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h1 id="这篇教程的目的是提前帮助同学们进行Hexo建站所需的工具安装和注册GitHub账户等可能会花费较多时间的准备工作。"><a href="#这篇教程的目的是提前帮助同学们进行Hexo建站所需的工具安装和注册GitHub账户等可能会花费较多时间的准备工作。" class="headerlink" title="这篇教程的目的是提前帮助同学们进行Hexo建站所需的工具安装和注册GitHub账户等可能会花费较多时间的准备工作。"></a>这篇教程的目的是提前帮助同学们进行Hexo建站所需的工具安装和注册GitHub账户等可能会花费较多时间的准备工作。</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p> 如果在操作过程中遇到任何问题，欢迎在哈工程IT协会群中直接询问，我会随时在线为大家解答。对于想要贯彻IT精神的人，也可以自行在百度上搜索解决方案😊。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/03/13/gerenbokedajianjiaocheng/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://oncelane.github.io/2024/02/15/meow/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Xiur">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Oncelane">
+      <meta itemprop="description" content="已巷的个人小站">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | Oncelane">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2024/02/15/meow/" class="post-title-link" itemprop="url">短文-猫</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2024-02-15 20:55:08" itemprop="dateCreated datePublished" datetime="2024-02-15T20:55:08+08:00">2024-02-15</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2024-03-13 12:15:09" itemprop="dateModified" datetime="2024-03-13T12:15:09+08:00">2024-03-13</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h1 id="猫"><a href="#猫" class="headerlink" title="猫"></a>猫</h1><p>黄昏是我一天中视力最差的时候，街上熙熙攘攘的人群我看不清面孔。当然，我并不期望在这座没有你的城市能如此轻易寻得你的身影。收回了看向街道的视线，一口饮尽手中的咖啡，我满心怅然地起身离开咖啡馆，开始了今日的徘徊。</p>
+<p>无非是一次偶遇。放学后路过某处僻静小巷时，一声嘤咛稚嫩的猫叫吸引了我的注意。我向声音寻去，便看到了它。</p>
+<p>橘黄的毛发，瞪着湿漉漉的眼睛，蹦跳着无比好奇地打量着周围的环境。轻轻招手它便向我走来，无疑是一只刚见世面的幼猫。</p>
+<p>选择猫或许是因为我的懦弱，又或许是这种可爱的生物天生吸引着我，我不知道。只是当我的手轻轻划过它柔顺的毛皮时，它竟没有太多的反抗，这不像是一只野猫的反应。</p>
+<p>然而我已经无法停止。听完了最后一声鸣呜，我捧起它似乎变得更轻的身体，向四周寻找它的安身所。</p>
+<p>正是在这时，事情发生了。</p>
+<p>你静静的站在我后面的一处阴影。看着你手中攥紧的猫绳，我立即明白了。我吞吞吐吐地开始向你解释……你却并不言语。对上你那双一如幼猫般湿漉漉的眼睛，我倍感麻烦。但终于你开口了，并非质问也非指责。我诧异于你口中吐露的话语，半响无法言语。你说希望今后我来做你的猫。</p>
+<p>这只是一场玩闹的游戏吧……但当我在学校里远远地看到你的身影向我招手，我才逐渐开始感觉到头疼。假装没有发现你，我快步走回自己的班级。你并不罢休。很快你就站在显眼的教室门口，轻轻向我招手，我便只能向你走去。第一次时，你让我放学后留在班里等你过来。被问到要做什么，你也只是狡黠一笑并不回应。</p>
+<p>放学后同学们渐渐离开教室，独剩我一人还坐在位子上。是了，任何平日里人流众多的场所一旦变得空旷无人，恐怖感自然而然浮现，但这又是为何呢。我的思绪在寂静中逐渐起舞。</p>
+<p>灯忽然灭了，一双手猛地抚上我的脖颈。</p>
+<p>“是你吗？”我无法转头，只好轻声发问，声音沉入黑寂中的教室。</p>
+<p>带着你体温的手指开始摩挲我的皮肤，轻柔环绕着我的脖颈，在身体自然泛起粟栗之前，我竟先感到一阵宽慰。这可是对猫的爱抚？你的手指最终锁定了我的喉管，开始禁锢我的呼吸。这样悄无声息地接近我，到底谁才是猫呢。忽略脖子上逐渐加重力气的指尖，我的心神慢慢转移你手上肌肤的温润。在南方这样沉闷的时节，略微敏感的脖颈被你捂在手中，让我开始感到难耐的燥热。</p>
+<p>并不需要挣扎，红外摄像头下你没有进行到最后的可能。只是像这样安静地接受你的惩罚，让我觉得自己像是面对神明忏悔的信徒，而且太过于虔诚了点吧。时间一点点流逝，我逐渐低下头，一如叩拜，一如敬仰。</p>
+<p>终于松开了手，我失力地倒在课桌上，身体的本能让我大口喘息着。你也体会到扼住生命的快意了吗。扭头看向你，黑暗模糊了你的表情，唯有眼睛依旧带着湿漉漉的水色，在昏暗中映出一点难得的月光。</p>
+<p>“要……要我送你回宿舍吗” 稍微歇息过后，我慢慢向你开口。你答应的十分干脆。我猜测你的心情很不错，我想，我也是。</p>
+<p>你偶尔叫我陪你一起闲聊，或是在饭堂里一同进餐。开心时你会发出隐秘而清脆的笑声，被打趣时也会佯装嗔怒，在旁人的目光里我们的相处再正常不过。随着在一起的时间增长，我注意到你的朋友极少。毕竟你很奇怪，好吧，我也一样，这似乎又没什么可奇怪的。</p>
+<p>平心而论，你实在是一个可爱的人，因此选择这样跟你相处或许已并非是我的良心忏悔。或许我只是被你湿润的眼睛所吸引，或许只是你需要一只猫，总而言之我再不想离开你。再进一步，如果能彻底窒息在你的双手里，我想，这才是我最大的愿望。我竟已如此成为一只猫了吗。哎呀，真是让我感到害羞。</p>
+<p>我约好与你在校运会的凌晨翻出围墙，去往校后的山顶消磨时光。那天的我们毫无计划，尽管过高的围栏与偏离大道的山路使我们看起来过于狼狈了，但是当同学们喧哗吵闹的声音逐渐被抛到脑后，一处平整而充满绿意的草地出现在眼前时，你与我都知道这就是今天的目的地，两人的隐秘之所。</p>
+<p>幻想把我推向了思绪的云端。在远离尘世的秘境中，我们同看日出、看月华、看苍茫的云海；我们同听鸟语、听虫鸣、听晚风的呼啸。我们如痴如醉，倒在了同一颗树下，又相视而笑，在万花丛中入眠。</p>
+<p>但事情又在这时候发生了。</p>
+<p>你的眼眸突然睁开，那双瞳孔或许是离我最近的星。被这样潮湿的眼睛盯住，谁不会失去气力呢？我松懈了，你也挣脱了捆住脖颈的手，挣脱了我。从此再不愿扭头看我一眼。</p>
+<p>你与我决裂一场，持续到高考结束各走天涯也再无联系。如今飘荡在这陌生城市的肉体或许早已经缺失了灵魂。是那些日子的记忆太过鲜明，还是七年的时间太短，我仍沉溺于你的一切。本应轮到了你的回合，你怎能放弃，这对我太不公平。</p>
+<p>拖曳着我本应交付与你的生命，我开始徘徊。这不为猫，不为自由，不为懦弱的快意。我想，我更需要窒息，需要你的注视，需要你手中的猫绳。</p>
+<p>走出咖啡馆，入秋后泛黄的叶片开始占据路面。枝干上的叶子放弃了对生命最后的执念，重重坠下，又被秋风轻柔地吹起。其中一片叶沿着优美的轨迹飘摇而落，</p>
+<p>正落在你的肩上。</p>
+<hr>
+<p>前年11月之前一次偶然的时机，我开始第一次创作这篇短文，感谢你提供的情绪来源，我也才能带着这般明显的怨气写出如此儿戏的文章</p>
+<p>明眼人肯定能看出它融合了许多作品：从作家李敖的《红玫瑰》，到网文《寂寂》，再到电影《大象席地而坐》和戏剧《恋爱的犀牛》。它们对我留下了很深刻的印象，因此我不要脸地将它们统统揉进了同一篇文字中</p>
+<p>在我看来，这些作品的共通之处是对日常生活的阴郁悲观的氛围渲染，但我在阅读或观看的过程中更多感受到的是宽慰，释然和解放，反而能够继续对生活进发了，原因为何我也不打算深入思考了。现如今也正是步入工作前做准备的最后时机，变得忙碌的日常不会让我有时间再回头慢慢修改这篇文，以及这篇文相关的人和事</p>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2024</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Xiur</span>
   </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
   
-<script src="/js/main.js"></script>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
 
 
-  <script>
-    $(document).ready(function () {
-      const mapleCount = "10";
-      const speed = "0.5";
-      const mapleEl = document.getElementById("maple");
-      const maples = Array.from({ length: mapleCount }).map(() => {
-        const maple = document.createElement("div");
-        const scale = Math.random() * 0.5 + 0.5;
-        const offset = Math.random() * 2 - 1;
-        const x = Math.random() * mapleEl.clientWidth;
-        const y = -Math.random() * mapleEl.clientHeight;
-        const duration = 10 / speed;
-        const delay = -duration;
-        maple.className = "maple";
-        maple.style.width = `${24 * scale}px`;
-        maple.style.height = `${24 * scale}px`;
-        maple.style.left = `${x}px`;
-        maple.style.top = `${y}px`;
-        maple.style.setProperty("--maple-fall-offset", offset);
-        maple.style.setProperty("--maple-fall-height", `${Math.abs(y) + mapleEl.clientHeight}px`);
-        maple.style.animation = `fall ${duration}s linear infinite`;
-        maple.style.animationDelay = `${delay}s`;
-        mapleEl.appendChild(maple)
-        return maple
-      })
-    });
-  </script>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
   
 
 
-  <div class="fixed top-0 bottom-0 left-0 right-0 pointer-events-none print:hidden" id="maple"></div>
+
+
+
+
+  
+
+
+
+
+
 </body>
-
 </html>
