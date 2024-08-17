@@ -31,7 +31,7 @@
 <meta property="og:image" content="https://oncelane.github.io/2024/04/03/mit65840lab1shixian/2.png">
 <meta property="og:image" content="https://oncelane.github.io/2024/04/03/mit65840lab1shixian/3.png">
 <meta property="article:published_time" content="2024-04-03T14:19:37.000Z">
-<meta property="article:modified_time" content="2024-04-06T02:48:51.771Z">
+<meta property="article:modified_time" content="2024-04-10T06:55:17.579Z">
 <meta property="article:author" content="Xiur">
 <meta property="article:tag" content="MIT6.5840">
 <meta name="twitter:card" content="summary">
@@ -113,7 +113,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#What-is-6-5840-about"><span class="nav-number">1.</span> <span class="nav-text">What is 6.5840 about?</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%98%E6%96%B9%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.1.</span> <span class="nav-text">官方介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.2.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Lab1-MapReduce"><span class="nav-number">1.3.</span> <span class="nav-text">Lab1: MapReduce</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#MapReduce%E6%B5%81%E7%A8%8B"><span class="nav-number">1.3.1.</span> <span class="nav-text">MapReduce流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Coordinator%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.2.</span> <span class="nav-text">Coordinator代码实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#worker%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.3.</span> <span class="nav-text">worker代码实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#worker%E7%9A%84ApplyMap-%E5%87%BD%E6%95%B0%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.3.1.</span> <span class="nav-text">worker的ApplyMap()函数实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#worker%E7%9A%84ApplyReduce-%E5%87%BD%E6%95%B0%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.3.2.</span> <span class="nav-text">worker的ApplyReduce()函数实现</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#shuffle%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0%EF%BC%9A"><span class="nav-number">1.3.4.</span> <span class="nav-text">shuffle代码实现：</span></a></li></ol></li></ol></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#What-is-6-5840-about"><span class="nav-number">1.</span> <span class="nav-text">What is 6.5840 about?</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%98%E6%96%B9%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.1.</span> <span class="nav-text">官方介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.2.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Lab1-MapReduce"><span class="nav-number">1.3.</span> <span class="nav-text">Lab1: MapReduce</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#MapReduce%E6%B5%81%E7%A8%8B"><span class="nav-number">1.3.1.</span> <span class="nav-text">MapReduce流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#worksteal"><span class="nav-number">1.3.2.</span> <span class="nav-text">worksteal</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Coordinator%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.3.</span> <span class="nav-text">Coordinator代码实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#worker%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.4.</span> <span class="nav-text">worker代码实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#worker%E7%9A%84ApplyMap-%E5%87%BD%E6%95%B0%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.4.1.</span> <span class="nav-text">worker的ApplyMap()函数实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#worker%E7%9A%84ApplyReduce-%E5%87%BD%E6%95%B0%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.4.2.</span> <span class="nav-text">worker的ApplyReduce()函数实现</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#shuffle%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0%EF%BC%9A"><span class="nav-number">1.3.5.</span> <span class="nav-text">shuffle代码实现：</span></a></li></ol></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -126,13 +126,13 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-count">8</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -195,7 +195,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2024-04-06 10:48:51" itemprop="dateModified" datetime="2024-04-06T10:48:51+08:00">2024-04-06</time>
+      <time title="修改时间：2024-04-10 14:55:17" itemprop="dateModified" datetime="2024-04-10T14:55:17+08:00">2024-04-10</time>
     </span>
 
   
@@ -333,6 +333,8 @@ mapf <span class="token operator">:=</span> xmapf<span class="token punctuation"
 </ol>
 <p>可以看到如果由coodinator来全权把握任务分配过程，实现起来是比较复杂的，coodinator要不停轮询来把握worker的状态。</p>
 <p>但是这样效率也是相对较高的，分配方式很灵活，它可以根据机器的性能参数设置任务分配优先级实现最优分配，还可以根据任务的实时性/计算量来决定要让多少个worker并行以达到减少资源消耗的目的。不过这毕竟只是入门实验lab1，我们就不要奢求太多了。我们选择另一种方式实现任务调度</p>
+<h3 id="worksteal"><a href="#worksteal" class="headerlink" title="worksteal"></a>worksteal</h3><p>我们借鉴work-steal的思想，让work自己从coordinator中取任务，这样可以自动实现负载均衡</p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/blog_programb/article/details/134893638">工作窃取（Work-Stealing）是一种多线程和并行计算中的负载平衡策略，主要在Java的Fork/Join框架中得到应用_java workstealing-CSDN博客</a></p>
 <p>worker的状态只有worker自己最清楚，因此采用worker主动联系coordinator取任务的方式实现起来会简单很多，coordinator接受到worker的任务请求后从自己的未完成任务里取一个交付给worker就完事了，接收到worker的任务完成后也看情况接受就行</p>
 <p>具体实现思路就是worker周期性调用RPC请求任务，根据返回值判断任务有没有分配成功，成功就做，做完再调用RPC通知coordinator任务完成</p>
 <h3 id="Coordinator代码实现"><a href="#Coordinator代码实现" class="headerlink" title="Coordinator代码实现"></a>Coordinator代码实现</h3><p>coordinator对于任务状态的三种标识:</p>
