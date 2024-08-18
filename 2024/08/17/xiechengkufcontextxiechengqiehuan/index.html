@@ -28,7 +28,7 @@
 <meta property="og:description" content="协程库原理之协程切换">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-08-17T14:07:02.000Z">
-<meta property="article:modified_time" content="2024-08-17T15:43:09.403Z">
+<meta property="article:modified_time" content="2024-08-18T04:30:51.177Z">
 <meta property="article:author" content="Xiur">
 <meta property="article:tag" content="协程库">
 <meta name="twitter:card" content="summary">
@@ -122,13 +122,13 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-count">9</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">5</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -183,9 +183,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2024-08-17 22:07:02 / 修改时间：23:43:09" itemprop="dateCreated datePublished" datetime="2024-08-17T22:07:02+08:00">2024-08-17</time>
+      <time title="创建时间：2024-08-17 22:07:02" itemprop="dateCreated datePublished" datetime="2024-08-17T22:07:02+08:00">2024-08-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2024-08-18 12:30:51" itemprop="dateModified" datetime="2024-08-18T12:30:51+08:00">2024-08-18</time>
     </span>
 
   
@@ -199,10 +205,9 @@
     
     <div class="post-body" itemprop="articleBody"><h1 id="协程库原理之协程切换"><a href="#协程库原理之协程切换" class="headerlink" title="协程库原理之协程切换"></a>协程库原理之协程切换</h1><span id="more"></span>
 
-<p>协程分为有栈协程和无栈协程，但它们进行协程切换的核心过程是一致的。</p>
-<p>无非就是将寄存器上的值保存到一个安全的地方，或者反过来，将之前保存好的上下文放到当前寄存器中</p>
-<p>我们先学习ucontext的使用，再来解释如何用fcontext代替ucontext实现更高效的切换效率</p>
-<p>使用linux下的ucontext进行协程切换非常简单，总共只需要用到三个接口和一个结构体</p>
+<p>协程可以分为有栈协程和无栈协程，但它们在进行切换时的核心过程是相似的。基本上，协程切换涉及将寄存器中的值保存到一个安全的地方，或者将之前保存的上下文恢复到寄存器中。</p>
+<p>在学习如何高效地实现协程切换之前，我们首先了解<code>ucontext</code>的使用方法，然后再探讨如何用<code>fcontext</code>代替<code>ucontext</code>以提高切换效率。</p>
+<p>使用linux下的<code>ucontext</code>进行协程切换非常简单，总共只需要用到三个接口和一个结构体</p>
 <ol>
 <li><p>int getcontext(ucontext_t *ucp);</p>
 <blockquote>
@@ -211,21 +216,21 @@
 </li>
 <li><p>void makecontext(ucontext_t *ucp, void (*func)(), int argc, …);</p>
 <blockquote>
-<p>初始化上下文，传入的函数指针为上下文将执行的函数体</p>
+<p>初始化上下文，并设置上下文将执行的函数体。</p>
 </blockquote>
 </li>
 <li><p>int swapcontext(ucontext_t  *oucp, const ucontext_t *ucp);</p>
 <blockquote>
-<p>保存和切换上下文</p>
+<p>保存当前上下文并切换到新的上下文。</p>
 </blockquote>
 </li>
 </ol>
-<p>ucontext_t结构体定义如下</p>
+<p><code>ucontext_t</code>结构体定义如下</p>
 <pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">typedef</span> <span class="token keyword">struct</span> <span class="token class-name">ucontext</span> <span class="token punctuation">{</span>
               <span class="token keyword">struct</span> <span class="token class-name">ucontext</span> <span class="token operator">*</span>uc_link<span class="token punctuation">;</span>	<span class="token comment">// uc_link 当前协程执行完毕后默认跳转到的下一个上下文</span>
               sigset_t         uc_sigmask<span class="token punctuation">;</span>	<span class="token comment">// 信号掩码</span>
               stack_t          uc_stack<span class="token punctuation">;</span>	<span class="token comment">// 栈指针</span>
-              <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+             <span class="token comment">// 其他成员...</span>
           <span class="token punctuation">}</span> ucontext_t<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>这里让gpt帮忙写一个demo帮助理解：</p>
@@ -280,8 +285,10 @@ ucontext_t ctx1<span class="token punctuation">,</span> ctx2<span class="token p
     <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>可以看到，用法就是使用getcontext + makecontext初始化协程的上下文结构体，</p>
-<p>然后调用swapcontext进行协程上下文的<strong>切换</strong>和<strong>保存</strong></p>
+<blockquote>
+<p>这个示例演示了如何使用<code>ucontext</code>进行基本的协程切换。</p>
+</blockquote>
+<p>可以看到，用法是通过 <code>getcontext</code> 和 <code>makecontext</code> 来初始化协程的上下文结构体，然后调用 <code>swapcontext</code> 来进行协程上下文的切换和保存。</p>
 <p>上面demo的代码流为：</p>
 <blockquote>
 <ol>
@@ -295,10 +302,8 @@ ucontext_t ctx1<span class="token punctuation">,</span> ctx2<span class="token p
 </li>
 </ol>
 </blockquote>
-<p>这就是非常经典的对称协程，也就是一个协程可以直接切换到另一个协程中，好似双方地位对等，多么美好。</p>
-<p>对应的还有非对称协程：所有协程分为两类，唯一的主协程和许多子协程</p>
-<p>在线程局部变量中保存唯一的主协程，因此也可以说主协程是线程本身</p>
-<p>主协程可以切换到任意子协程，但是子协程只能切换为主协程，即子协程1切换到子协程2的最短流程为：</p>
+<p>这就是经典的对称协程设计，其中协程之间可以相互切换，地位对等，切换灵活且直接。</p>
+<p>与对称协程对应的是非对称协程设计，其中协程分为两类：唯一的主协程和多个子协程。主协程在线程局部变量中保存，因此可以视为线程本身。主协程可以切换到任何子协程，但子协程只能切换回主协程。例如，子协程1 切换到子协程2 的最短流程为：</p>
 <blockquote>
 <ol>
 <li><p>协程1 -&gt; 主协程</p>
@@ -306,18 +311,15 @@ ucontext_t ctx1<span class="token punctuation">,</span> ctx2<span class="token p
 <li><p>主协程 -&gt; 协程2</p>
 </li>
 </ol>
-<p>灵活性相比demo中展示差了许多，还有额外的cpu开销</p>
 </blockquote>
-<p>那么为什么我的协程库还是采用非对称协程设计呢？</p>
-<p>因为对称协程在实际使用中会出现一个问题，协程切换不应该是手动的（如果是，那就是纯纯的状态机，而且是手搓的状态），也就是说协程库需要保证每一个协程都能通过某种方式自动得知它的下一个接手线程控制权的协程是谁。</p>
-<p>如果采用类似上面对称协程的设计会导致很严重的代码复杂度，代码复杂度同样反过来影响性能。</p>
-<p>因此下面不仅将ucontext切换方式改为fcontext，同时还将初步设计一个非对称协程的最小模型</p>
+<p>相较于对称协程，非对称协程在灵活性上有所欠缺，并且引入了额外的 CPU 开销。</p>
+<p>那么，为什么我的协程库还是采用非对称协程设计呢？</p>
+<p>因为对称协程在实际使用中存在一个问题：协程切换应该是自动的，而不是手动控制的。也就是说，协程库需要确保每个协程能以某种方式自动得知它的下一个执行者。采用对称协程设计会显著增加代码复杂度，而代码复杂度反过来会影响性能。</p>
+<p>因此，下面将把 <code>ucontext</code> 切换方式替换为 <code>fcontext</code>，并初步设计一个非对称协程的最小模型。</p>
 <h1 id="fcontext"><a href="#fcontext" class="headerlink" title="fcontext"></a>fcontext</h1><blockquote>
-<p>fcontext在1.61版本之前的api与ucontext不能说类似，只能说一摸一样! 基本什么也不用做，改改函数名就能完成升级</p>
-<p>1.61之后的boost对fcontext库做了许多改动，导致api使用方式与之前有了很大的不同，并且没有任何官方文档！！！</p>
-<p>本人被迫进行了为期一天的测试，基本摸清了接口用法</p>
+<p>fcontext 的 API 在 1.61 版本之前与 ucontext 非常类似，仅需修改函数名即可完成升级。然而，从 1.61 版本之后，Boost 对 fcontext 库进行了许多更改，导致 API 使用方式与之前有了很大不同，并且官方文档并不完善。因此，我进行了为期一天的测试，以基本掌握接口用法。</p>
 </blockquote>
-<p>fcontext的接口有三个，结构体两个：</p>
+<p><code>fcontext</code>的接口包括三个函数和两个结构体：</p>
 <ol>
 <li><p>transfer_t  jump_fcontext( fcontext_t const to, void * vp);</p>
 </li>
@@ -326,8 +328,8 @@ ucontext_t ctx1<span class="token punctuation">,</span> ctx2<span class="token p
 <li><p>transfer_t  ontop_fcontext( fcontext_t const to, void * vp, transfer_t (* fn)( transfer_t) );</p>
 </li>
 </ol>
-<p>fcontext_t： 子段不重要，只需要知道它保存了协程上下文</p>
-<p>transfer_t 的定义如下： </p>
+<p>其中，<code>fcontext_t</code>保存了协程上下文，具体的字段细节并不重要。</p>
+<p><code>transfer_t </code>的定义如下： </p>
 <pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">struct</span> <span class="token class-name">transfer_t</span> <span class="token punctuation">{</span>
     fcontext_t  fctx<span class="token punctuation">;</span> <span class="token comment">// from 协程上下文 （from！）</span>
     <span class="token keyword">void</span>    <span class="token operator">*</span>   data<span class="token punctuation">;</span> <span class="token comment">// 透传指针</span>
@@ -363,6 +365,7 @@ ucontext_t ctx1<span class="token punctuation">,</span> ctx2<span class="token p
 <span class="token keyword">class</span> <span class="token class-name">fFiber</span> <span class="token punctuation">{</span>
 <span class="token keyword">private</span><span class="token operator">:</span>
 <span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">using</span> ptr <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>fFiber<span class="token operator">&gt;</span><span class="token punctuation">;</span>
     <span class="token keyword">using</span> callBack <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span>function<span class="token operator">&lt;</span><span class="token keyword">void</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span><span class="token operator">&gt;</span><span class="token punctuation">;</span>
 
     <span class="token comment">// 无参构造，用于构造本线程的主协程</span>
@@ -373,11 +376,9 @@ ucontext_t ctx1<span class="token punctuation">,</span> ctx2<span class="token p
     <span class="token comment">// 含参构造，用于构造一个将执行cb函数的协程对象</span>
     <span class="token function">fFiber</span><span class="token punctuation">(</span>callBack _cb<span class="token punctuation">)</span> <span class="token operator">:</span> <span class="token function">m_cb</span><span class="token punctuation">(</span>_cb<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">m_stackSize</span><span class="token punctuation">(</span><span class="token number">1024</span> <span class="token operator">*</span> <span class="token number">4</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
         <span class="token comment">// 使用malloc,分配协程栈，这里固定为4k大小</span>
-        <span class="token comment">// (问题1：可以猜测为什么不用new？)</span>
         m_stack <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">char</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token class-name">Allocator</span><span class="token double-colon punctuation">::</span><span class="token function">Alloc</span><span class="token punctuation">(</span>m_stackSize<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
         <span class="token comment">// 构造上下文，执行要执行的函数为MainFunc</span>
-        <span class="token comment">// (问题2：为什么不可以直接将MainFunc直接替换为cb？)</span>
         m_fctx <span class="token operator">=</span> boost<span class="token double-colon punctuation">::</span>context<span class="token double-colon punctuation">::</span>detail<span class="token double-colon punctuation">::</span><span class="token function">make_fcontext</span><span class="token punctuation">(</span>
             m_stack <span class="token operator">+</span> m_stackSize<span class="token punctuation">,</span> m_stackSize<span class="token punctuation">,</span> MainFunc<span class="token punctuation">)</span><span class="token punctuation">;</span>
     <span class="token punctuation">}</span>
@@ -387,6 +388,13 @@ ucontext_t ctx1<span class="token punctuation">,</span> ctx2<span class="token p
         <span class="token keyword">if</span> <span class="token punctuation">(</span>m_stack<span class="token punctuation">)</span> <span class="token punctuation">{</span>
             <span class="token class-name">Allocator</span><span class="token double-colon punctuation">::</span><span class="token function">Dealloc</span><span class="token punctuation">(</span>m_stack<span class="token punctuation">,</span> m_stackSize<span class="token punctuation">)</span><span class="token punctuation">;</span>
         <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment">// reset接口可以复用协程对象栈，协程池</span>
+    <span class="token keyword">void</span> <span class="token function">reset</span><span class="token punctuation">(</span>callBack cb<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        m_cb <span class="token operator">=</span> cb<span class="token punctuation">;</span>
+        m_fctx <span class="token operator">=</span> boost<span class="token double-colon punctuation">::</span>context<span class="token double-colon punctuation">::</span>detail<span class="token double-colon punctuation">::</span><span class="token function">make_fcontext</span><span class="token punctuation">(</span>
+            m_stack <span class="token operator">+</span> m_stackSize<span class="token punctuation">,</span> m_stackSize<span class="token punctuation">,</span> MainFunc<span class="token punctuation">)</span><span class="token punctuation">;</span>
     <span class="token punctuation">}</span>
 
     <span class="token comment">// 切入协程，执行cb函数</span>
@@ -460,7 +468,7 @@ ucontext_t ctx1<span class="token punctuation">,</span> ctx2<span class="token p
 <span class="token punctuation">}</span>
 <span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token function">testFiberSwapOut</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
     </div>
 
     
@@ -481,6 +489,9 @@ ucontext_t ctx1<span class="token punctuation">,</span> ctx2<span class="token p
                 </a>
             </div>
             <div class="post-nav-item">
+                <a href="/2024/08/18/websocketimku/" rel="next" title="websocket-im库">
+                  websocket-im库 <i class="fa fa-angle-right"></i>
+                </a>
             </div>
           </div>
     </footer>
