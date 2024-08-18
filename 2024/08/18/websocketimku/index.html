@@ -29,7 +29,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://oncelane.github.io/2024/08/18/websocketimku/1.png">
 <meta property="article:published_time" content="2024-08-18T03:35:05.000Z">
-<meta property="article:modified_time" content="2024-08-18T07:02:55.094Z">
+<meta property="article:modified_time" content="2024-08-18T09:04:24.071Z">
 <meta property="article:author" content="Xiur">
 <meta property="article:tag" content="im即时通讯">
 <meta name="twitter:card" content="summary">
@@ -187,7 +187,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2024-08-18 11:35:05 / 修改时间：15:02:55" itemprop="dateCreated datePublished" datetime="2024-08-18T11:35:05+08:00">2024-08-18</time>
+      <time title="创建时间：2024-08-18 11:35:05 / 修改时间：17:04:24" itemprop="dateCreated datePublished" datetime="2024-08-18T11:35:05+08:00">2024-08-18</time>
     </span>
 
   
@@ -227,10 +227,17 @@
 }<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>只要websocket连接不断开，这两个协程一直处于工作状态</p>
-<p>这种设计使得系统的 I/O 效率得到了显著提升。尽管这种实现方式在代码上相较于 C++ 网络服务器框架显得更加简洁，但 C++ 协程近来也在获得关注。我个人的改进设计Lane协程库也值得一看，提供了另一种协程处理的思路。<a href="https://oncelane.github.io/2024/08/17/xiechengkufcontextxiechengqiehuan/#more">Lane协程库</a>可以一观，同样能根据），后续就是im即时通讯这一部分该如何实</p>
-<h1 id="IM"><a href="#IM" class="headerlink" title="IM"></a>IM</h1><p>im中有两个最基础概念：group和channel，其中group或者也可以叫做room，它代表一个Channel的集合，用于规定消息广播的范围</p>
-<p>对于im来说最常用的消息转发是多播（房间内广播）和单播（一对一回复），多播是im的核心，适用的场景为群聊社交，单播可用于游戏服务器，低延迟监控等等</p>
-<p>如果存粹做一个群聊的话，只需要解决以下几个问题，怎么将一个Channel绑定到一个房间，如何管理多个房间，如何处理Recv Chan中的数据，其实极其简单，问gpt都懂</p>
+<p>这种设计使得系统的 I/O 效率得到了显著提升。尽管这种实现方式在代码上相较于 C++ 网络服务器框架显得更加简洁，但 C++ 协程近来也在获得关注。我个人的改进设计<a href="https://oncelane.github.io/2024/08/17/xiechengkufcontextxiechengqiehuan/#more">Lane网络协程库</a>也值得一看，提供了另一种协程处理的思路。</p>
+<p>后续就是im即时通讯这一部分该如何实</p>
+<h1 id="IM"><a href="#IM" class="headerlink" title="IM"></a>IM</h1><p>即时通讯系统中有两个基本概念：<code>group</code>（群组）和 <code>channel</code>（通道）。其中，<code>group</code>，也称为 <code>room</code>（房间），表示一个 <code>Channel</code> 的集合，用于定义消息广播的范围。</p>
+<p>在 IM 系统中，常见的消息转发方式包括多播（广播）和单播（一对一）。多播是 IM 系统的核心，适用于群聊等社交场景；单播则可用于游戏服务器、低延迟监控等应用场景。</p>
+<p>如果目标是实现一个简单的群聊系统，我们需要解决以下几个问题：</p>
+<ul>
+<li>如何将一个 Channel 绑定到一个房间</li>
+<li>如何管理多个房间</li>
+<li>如何处理 Recv 通道中的数据</li>
+</ul>
+<p>这些问题的解决方案其实非常简单，了解了基本概念后，您会发现实现过程并不复杂。</p>
 <pre class="line-numbers language-ascii" data-language="ascii"><code class="language-ascii">     Client1 2 and 3 are in the same room                                
                                                                          
      This show how Client1 brocasts its msg to others in the same room:  
@@ -258,10 +265,15 @@ Client3◄──────┼Send chan◄─┼───┘   ┌Room2──�
                                   │           │                          
                                   └───────────┘                          <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>因此程序的重点在于如何动态管理channel和room的关系，chennel怎么加入room，room如何因为新的连接请求而被自动创建，channel在连接关闭销毁后，如何通知room自己已经不在了等等一系列问题</p>
-<p>其实只是比较繁琐并非很难，因此我这里主要介绍关于websocket本身的一些技术点，并非im框架本身的实现</p>
-<h1 id="websocket"><a href="#websocket" class="headerlink" title="websocket"></a>websocket</h1><p>websocket是一个基于html的网络协议，实际上websocket协议属于html5协议的一部分，进行ws握手是实际发送的是先通过tcp三次握手建立http连接，再通过http连接发送ws握手请求</p>
-<p>ws握手的请求如下：</p>
+<p>在程序中，关键在于动态管理 channel 和 room 之间的关系。这包括处理以下问题：</p>
+<ul>
+<li>channel 如何加入 room；</li>
+<li>room 如何在接收到新的连接请求时自动创建；</li>
+<li>当 channel 连接关闭时，如何通知 room 该 channel 已经不再存在。</li>
+</ul>
+<p>虽然这些问题较为繁琐，但并不特别困难。因此，本节主要介绍 WebSocket 的一些技术点，而非 IM 框架本身的实现细节。</p>
+<h1 id="websocket"><a href="#websocket" class="headerlink" title="websocket"></a>websocket</h1><p>WebSocket 是一种基于 HTML 的网络协议，实际上属于 HTML5 协议的一部分。在 WebSocket 握手过程中，首先通过 TCP 三次握手建立 HTTP 连接，然后通过 HTTP 连接发送 WebSocket 握手请求。</p>
+<p>WebSocket 握手请求的格式如下：</p>
 <pre class="line-numbers language-none"><code class="language-none">GET /chat HTTP/1.1
 Host: server.example.com
 Upgrade: websocket
@@ -732,17 +744,15 @@ Sec-WebSocket-Accept: K7DJLdLooIwIG/MOpvWFB3y3FE8=<span aria-hidden="true" class
 </tr>
 </tbody></table>
 <p>在诸多websocket库的实现中，<code>gorilla</code>的实现比较亮眼，下载源码后可以看到它也是通过<code>Hijack</code>方法拿到http的请求的tcp连接。</p>
-<p>同时，查看<code>goim</code>的源码，可以看到<code>goim</code>用非常简洁的方式自行实现了完整的websocket协议，有兴趣的读者可以去查看<code>goim</code>源码中的<a target="_blank" rel="noopener" href="https://github.com/Terry-Mao/goim/tree/master/pkg/websocket"><code>websocket</code> 包</a>，对协议的理解</p>
-<p>下面将介绍<code>gorilla</code>库的api</p>
+<p>同时，查看<code>goim</code>的源码，可以看到<code>goim</code>用非常简洁的方式自行实现了完整的websocket协议，有兴趣的读者可以去阅读<code>goim</code>源码中的<a target="_blank" rel="noopener" href="https://github.com/Terry-Mao/goim/tree/master/pkg/websocket">websocket 包</a>以加深对协议的理解</p>
 <h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><p>http是基于tcp连接的，tcp连接虽然是可靠，有序的，然而它却是基于字节流传输的，需要上层协议帮忙进行粘包处理，http通过\r\n等标识符区分消息边界</p>
 <p>因此websocket协议同样需要通过自己的方式进行消息边界划分:</p>
 <p><img src="/2024/08/18/websocketimku/1.png" alt="websocket协议 "></p>
 <blockquote>
 <p>BodySize范围：0&lt;=BodySize&lt;=MaxBodySize = int32(1&lt;&lt;10)</p>
-</blockquote>
-<blockquote>
 <p>PackSize范围：RawHeaderSize&lt;=PackSize&lt;=MacPackSize(RawHeaderSize+BodySize)</p>
 </blockquote>
+<p>下面将介绍<code>gorilla</code>库的api</p>
 <h1 id="gorilla"><a href="#gorilla" class="headerlink" title="gorilla"></a>gorilla</h1><p>gpt友情提供：</p>
 <ol>
 <li><p>建立连接</p>
